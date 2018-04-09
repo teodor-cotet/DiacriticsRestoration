@@ -21,22 +21,19 @@ def main_render():
 @app.route('/answer-matching', methods=['POST', 'OPTIONS'])
 # @cross_origin(origin='*')
 def match_response():
-    if not request.json or not 'predefined-answers' in request.json:
+    if not request.json or not 'options' in request.json:
         abort(400)
-    if not request.json or not 'user-answer' in request.json:
+    if not request.json or not 'input' in request.json:
         abort(400)
 
 
-    print(request.json['predefined-answers'])
-    print(request.json['user-answer'])
+    answers = [nlp(answer['text']) for answer in request.json['options'] if len(answer.strip()) > 0]
+    user_answer = nlp(request.json['input']['text'])
     
-    answers = [nlp(answer) for answer in request.json['predefined-answers'] if len(answer.strip()) > 0]
-    user_answer = nlp(request.json['user-answer'])
-    scores = {}
-    for idx, answer in enumerate(answers):
-        scores[idx] = answer.similarity(user_answer)
-    data = {"scorePerAnswer" : scores}
-    result = {"data": data, "success": True, "errorMsg": ""}
+    scores = [{"score": answer.similarity(user_answer)} for answer in answers]
+    
+    data = {"scoresPerOption" : scores}
+    result = {"result": data, "success": True, "errorMsg": ""}
     response = jsonify(result)
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
