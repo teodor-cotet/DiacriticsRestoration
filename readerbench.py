@@ -1,16 +1,10 @@
 from flask import Flask, request, abort, jsonify, render_template, flash, Response
-from flask_cors import CORS, cross_origin
 import spacy
-
 
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config['SECRET_KEY'] = '7d441f27d441f27123d441f2b6176a'
-# app.config['CORS_HEADERS'] = 'Content-Type'
-# CORS(app)
-# cors = CORS(app, resources={r"/answer-matching": {"origins": "*"}})
-
 
 nlp = spacy.load('nl')
 
@@ -25,7 +19,6 @@ def handle_options():
 
 
 @app.route('/answer-matching', methods=['POST'])
-# @cross_origin(origin='*')
 def match_response():
     if not request.json or not 'options' in request.json:
         abort(400)
@@ -49,6 +42,5 @@ def match_response():
 
 
 if __name__ == '__main__':
-    app.run(host="141.85.232.72", port=8081, debug=False)
-    # app.run(port=8080)
+    app.run(host="0.0.0.0", port=8081, debug=False)
     
