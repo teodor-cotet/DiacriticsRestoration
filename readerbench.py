@@ -1,4 +1,4 @@
-from flask import Flask, request, abort, jsonify, render_template, flash
+from flask import Flask, request, abort, jsonify, render_template, flash, Response
 from flask_cors import CORS, cross_origin
 import spacy
 
@@ -14,11 +14,17 @@ app.config['SECRET_KEY'] = '7d441f27d441f27123d441f2b6176a'
 
 nlp = spacy.load('nl')
 
-@app.route('/', methods=['GET'])
-def main_render():
-	return render_template('main.html')
+@app.route('/answer-matching', methods=['OPTIONS'])
+def handle_options():
+    response = Response()
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+  
+    return response, 200
 
-@app.route('/answer-matching', methods=['POST', 'OPTIONS'])
+
+@app.route('/answer-matching', methods=['POST'])
 # @cross_origin(origin='*')
 def match_response():
     if not request.json or not 'options' in request.json:
@@ -27,7 +33,7 @@ def match_response():
         abort(400)
 
 
-    answers = [nlp(answer['text']) for answer in request.json['options'] if len(answer.strip()) > 0]
+    answers = [nlp(answer['text']) for answer in request.json['options'] if len(answer['text'].strip()) > 0]
     user_answer = nlp(request.json['input']['text'])
     
     scores = [{"score": answer.similarity(user_answer)} for answer in answers]
