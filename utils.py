@@ -16,5 +16,12 @@ def split_sentences(fileName: str) -> Iterable[List[str]]:
             for sent in sent_tokenize(line):
                 yield [token for token in tokenizer.tokenize(sent)
                        if token.isalpha and not token == '.']
-                # sentences.append(str(sent))
-    # return sentences
+
+def tokenize_docs(fileName: str) -> Iterable[List[str]]:
+    # sentences = []
+    tokenizer = WordPunctTokenizer()
+    with open(fileName, "rt") as f:
+        for line in f.readlines():
+            yield [token for token in tokenizer.tokenize(line)
+                if token.isalpha and not token == '.']
+            
