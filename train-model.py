@@ -26,7 +26,7 @@ def train_lda(inputFilePath):
     lda = LdaMulticore(corpus, num_topics=300, id2word=id2word)
     path = folder + "/lda.model"
     matrix = np.transpose(lda.get_topics())
-    with open(path, "wt") as f:
+    with open(path, "wt", encoding='utf-8') as f:
         f.write(str(np.size(matrix, 0)) + "\n")
         for idx in range(np.size(matrix, 0)):
             f.write(id2word[idx] + " " + " ".join([str(x) for x in matrix[idx]]) + "\n")
