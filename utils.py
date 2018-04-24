@@ -11,7 +11,7 @@ from nltk.tokenize import sent_tokenize, WordPunctTokenizer
 def split_sentences(fileName: str) -> Iterable[List[str]]:
     # sentences = []
     tokenizer = WordPunctTokenizer()
-    with open(fileName, "rt") as f:
+    with open(fileName, "rt", encoding='utf-8') as f:
         for line in f.readlines():
             for sent in sent_tokenize(line):
                 yield [token for token in tokenizer.tokenize(sent)
@@ -20,7 +20,7 @@ def split_sentences(fileName: str) -> Iterable[List[str]]:
 def tokenize_docs(fileName: str) -> Iterable[List[str]]:
     # sentences = []
     tokenizer = WordPunctTokenizer()
-    with open(fileName, "rt") as f:
+    with open(fileName, "rt", encoding='utf-8') as f:
         for line in f.readlines():
             yield [token for token in tokenizer.tokenize(line)
                 if token.isalpha and not token == '.']
