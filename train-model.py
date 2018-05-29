@@ -33,14 +33,14 @@ def train_lda(inputFilePath: str):
     print("Model saved to ", path)
 
 def train_lsa(inputFilePath: str):
-    corpus = tokenize_docs(inputFilePath)
+    corpus = list(tokenize_docs(inputFilePath))
     id2word = Dictionary(corpus)
     id2word.filter_extremes(no_below=20, no_above=0.1)
     folder = dirname(inputFilePath)
     corpus = [id2word.doc2bow(doc) for doc in corpus]
     print("Starting training...")
     lsa = LsiModel(corpus=corpus, id2word=id2word, num_topics=300)
-    path = folder + "/lda.model"
+    path = folder + "/lsa.model"
     matrix = np.transpose(lsa.get_topics())
     with open(path, "wt", encoding='utf-8') as f:
         f.write("{} {}\n".format(np.size(matrix, 0), np.size(matrix, 1)))
@@ -50,7 +50,7 @@ def train_lsa(inputFilePath: str):
 
 
 if __name__ == "__main__":
-    inputFilePath = "../../corpora/coca_out.txt"
+    inputFilePath = "corpora/NL/inl_out.txt"
     print("Loading dataset: ", inputFilePath)
-    train_w2v(inputFilePath)
+    train_lsa(inputFilePath)
     
