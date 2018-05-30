@@ -1,0 +1,30 @@
+{
+  "speed":{
+    "nwords":17074,
+    "gpu":null,
+    "cpu":2981.7626411758
+  },
+  "name":"unnamed",
+  "version":"0.0.0",
+  "spacy_version":">=2.0.12.dev0",
+  "accuracy":{
+    "token_acc":100.0,
+    "uas":86.1613000908,
+    "ents_p":0.0,
+    "tags_acc":95.5956424974,
+    "las":78.0862016756,
+    "ents_r":0.0,
+    "ents_f":0.0
+  },
+  "vectors":{
+    "width":0,
+    "vectors":0,
+    "keys":0
+  },
+  "pipeline":[
+    "tagger",
+    "parser",
+    "ner"
+  ],
+  "lang":"ro"
+}
