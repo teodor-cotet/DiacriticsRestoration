@@ -3,6 +3,13 @@ from spacy.lang.ro import Romanian
 from typing import Dict, List
 from nltk import sent_tokenize
 
+
+# JSON Example localhost:8081/spacy application/json
+# {
+#     "lang" : "en",
+#     "blocks" : ["După terminarea oficială a celui de-al doilea război mondial, în conformitate cu discursul lui W. Churchill (prim ministru al Regatului Unit la acea dată), de la Fulton, s-a declanșat Războiul rece și a apărut conceptul de cortină de fier. Urmare a politicii consecvente de apărare a sistemului economic și politic (implicit a intereslor economice ale marelui capital din lumea occidentală) trupele germane, în calitate de prizonieri, aflate pe teritoriul Germaniei de Vest au fost reînarmate și au constituit baza viitorului Bundeswehr - armata regulată a R.F.G."]
+# }
+
 class SpacyDoc:
 
     def __init__(self):
