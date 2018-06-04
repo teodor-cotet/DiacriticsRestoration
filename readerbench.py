@@ -1,12 +1,14 @@
 from flask import Flask, request, abort, jsonify, render_template, flash, Response
-import spacy
-
+# import spacy
+from spacy_doc import SpacyDoc
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config['SECRET_KEY'] = '7d441f27d441f27123d441f2b6176a'
+spacyInstance = SpacyDoc()
 
-nlp = spacy.load('nl')
+
+# nlp = spacy.load('nl')
 
 @app.route('/answer-matching', methods=['OPTIONS'])
 def handle_options():
@@ -15,6 +17,17 @@ def handle_options():
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
   
+    return response, 200
+
+@app.route('/test', methods=['POST'])
+def handle_get():
+    # if not request.json:
+    #     abort(400)
+
+    print(request.json)
+
+    result = {"doc": {"blocks" : [{"block" : "Ana are mere", sentences: [{}]}]}}
+    response = jsonify(result)
     return response, 200
 
 
@@ -40,6 +53,15 @@ def match_response():
   
     return response, 200
 
+@app.route('/spacy', methods=['POST'])
+def create_spacy_doc():
+    if not request.json or not 'blocks' in request.json:
+        abort(400)
+
+    doc = spacyInstance.process(request.json['blocks'])
+    response = jsonify(doc)
+
+    return response, 200
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8081, debug=False)
