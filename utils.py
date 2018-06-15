@@ -40,5 +40,7 @@ def load_docs(folder: str) -> Iterable[str]:
                     else:
                         current += line
                     line = fin.readline()
+                if current != "":
+                    yield current
 
 

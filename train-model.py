@@ -16,15 +16,13 @@ def train_w2v(sentences: List, outputFolder: str):
     model.wv.save_word2vec_format(path, binary=False)
     print("Model saved to ", path)
 
-def train_lda(inputFilePath: str):
-    corpus = tokenize_docs(inputFilePath)
-    id2word = Dictionary(corpus)
-    id2word.filter_extremes(no_below=20, no_above=0.1)
-    folder = dirname(inputFilePath)
-    corpus = [id2word.doc2bow(doc) for doc in corpus]
+def train_lda(docs: List, outputFolder: str):
+    id2word = Dictionary(docs)
+    id2word.filter_extremes(no_below=20, no_above=0.1, keep_n=1000000)
+    corpus = [id2word.doc2bow(doc) for doc in docs]
     print("Starting training...")
     lda = LdaMulticore(corpus, num_topics=300, id2word=id2word)
-    path = folder + "/lda.model"
+    path = outputFolder + "/lda.model"
     matrix = np.transpose(lda.get_topics())
     with open(path, "wt", encoding='utf-8') as f:
         f.write("{} {}\n".format(np.size(matrix, 0), np.size(matrix, 1)))
@@ -79,6 +77,7 @@ if __name__ == "__main__":
     print("Loading dataset...")
     sentences = list(preprocess(parser, inputFolder, 'ro', split_sent=False))
     # train_w2v(sentences, inputFolder)
-    train_lsa(sentences, inputFolder)
+    # train_lsa(sentences, inputFolder)
+    train_lda(sentences, inputFolder)
     
     
