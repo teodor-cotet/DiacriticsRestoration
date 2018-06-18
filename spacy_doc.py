@@ -1,8 +1,8 @@
 import spacy
 from spacy.lang.ro import Romanian
-from typing import Dict, List
+from typing import Dict, List, Iterable
 from nltk import sent_tokenize
-
+import re
 
 # JSON Example localhost:8081/spacy application/json
 # {
@@ -17,23 +17,43 @@ models = {
     'ro': 'models/model3'
 }
 
+normalization = {
+    'ro': [
+        (re.compile("ş"), "ș"),
+        (re.compile("Ş"), "Ș"),
+        (re.compile("ţ"), "ț"),
+        (re.compile("Ţ"), "Ț"),
+        (re.compile("(\w)î(\w)"), "\g<1>â\g<2>")
+    ]
+}
 class SpacyDoc:
 
     def __init__(self):
         self.ner = spacy.load('xx_ent_wiki_sm')
         # self.romanian = Romanian()
         self.pipelines = {
-            'ro': Romanian()
+            lang: spacy.util.get_lang_class(lang)()
+            for lang in models
         }
+        # for pipeline in self.pipelines.values():
+        #     component = pipeline.create_pipe('tagger')   # 3. create the pipeline components
+        #     pipeline.add_pipe(component)
         self.loaded_models = {}
         
-    def get_tokens_lemmas(self, sentence: str, lang: str):
+    def preprocess(self, text: str, lang: str) -> str:
+        if lang not in normalization:
+            return text
+        for pattern, replacement in normalization[lang]:
+            text = re.sub(pattern, replacement, text)
+        return text
+
+    def get_tokens_lemmas(self, sentences: Iterable, lang: str) -> Iterable:
         if lang not in self.pipelines:
             return None
         pipeline = self.pipelines[lang]
         # sbd = pipeline.create_pipe('sentencizer')
         # pipeline.add_pipe(sbd)
-        doc = pipeline(sentence)
+        doc = pipeline.pipe((sent[:1].lower() + sent[1:] for sent in sentences), batch_size=100000, n_threads=16)
         # print([sent.string.strip() for sent in doc.sents])
         # print(len(doc.sents))
         # print("====================")
@@ -103,7 +123,7 @@ class SpacyDoc:
                 res["sentences"].append(res_sent)
             result.append(res)
 
-        return result
+        return result   
 
 if __name__ == "__main__":
     spacyInstance = SpacyDoc()
@@ -119,5 +139,6 @@ if __name__ == "__main__":
 
     # print(spacyInstance.get_ner(sent))
     # print(spacyInstance.get_tokens_lemmas(sent))
-    # spacyInstance.parse(sent)
-    print(spacyInstance.get_tokens_lemmas(sent, 'ro'))
+    for token in spacyInstance.parse(sent, 'ro'):
+        print(token.pos_)
+    # print(spacyInstance.preprocess("coborî", 'ro'))

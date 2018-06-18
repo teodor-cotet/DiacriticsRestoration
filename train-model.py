@@ -8,6 +8,7 @@ import numpy as np
 from itertools import islice
 from spacy_doc import SpacyDoc
 from math import log
+import time
 
 def train_w2v(sentences: List, outputFolder: str):
     print("Starting training...")
@@ -51,6 +52,7 @@ def train_lsa(docs: List, outputFolder: str):
     print("Starting training...")
     lsa = LsiModel(corpus=corpus, id2word=id2word, num_topics=300)
     path = outputFolder + "/lsa.model"
+    lsa.save(outputFolder + "/lsa.bin")
     matrix = np.transpose(lsa.get_topics())
     with open(path, "wt", encoding='utf-8') as f:
         f.write("{} {}\n".format(np.size(matrix, 0), np.size(matrix, 1)))
@@ -58,12 +60,18 @@ def train_lsa(docs: List, outputFolder: str):
             f.write(id2word[idx] + " " + " ".join([str(x) for x in matrix[idx]]) + "\n")
     print("Model saved to ", path)
 
-def preprocess(parser: SpacyDoc, folder: str, lang: str, split_sent: bool = True) -> Iterable[List]:
+def preprocess(parser: SpacyDoc, folder: str, lang: str, split_sent: bool = True, only_dict_words: bool = False) -> Iterable[List]:
+    if only_dict_words:
+        test = lambda x: not x.is_oov
+    else:
+        test = lambda x: True
     for doc in load_docs(folder):
         result = []
-        for sent in parser.tokenize_sentences(doc):
-            tokens = parser.get_tokens_lemmas(sent, lang)
-            tokens = [token.lemma_.lower() for token in tokens if not token.is_stop and token.is_alpha]
+        doc = parser.preprocess(doc, lang)
+        for tokens in parser.get_tokens_lemmas(parser.tokenize_sentences(doc), lang):
+            if len(tokens) == 0:
+                continue
+            tokens = [token.lemma_.lower() for token in tokens if not token.is_stop and token.is_alpha and test(token)]
             if split_sent:
                 yield tokens
             else:
@@ -75,9 +83,8 @@ if __name__ == "__main__":
     inputFolder= "RO/ReadME"
     parser = SpacyDoc()
     print("Loading dataset...")
-    sentences = list(preprocess(parser, inputFolder, 'ro', split_sent=False))
+    sentences = preprocess(parser, inputFolder, 'ro', split_sent=False)
     # train_w2v(sentences, inputFolder)
-    # train_lsa(sentences, inputFolder)
-    train_lda(sentences, inputFolder)
-    
+    train_lsa(sentences, inputFolder)
+    # train_lda(sentences, inputFolder)
     

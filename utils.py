@@ -5,6 +5,9 @@ from nltk.tokenize import sent_tokenize, WordPunctTokenizer
 from os.path import isdir, isfile, join
 from os import listdir
 
+from spacy.lang.ro.lemmatizer import LOOKUP
+from spacy.lang.ro.lex_attrs import words
+
 # nlp = spacy.load('en_core_web_sm')
 # nlp.remove_pipe('tagger')
 # nlp.remove_pipe('parser')
@@ -43,4 +46,10 @@ def load_docs(folder: str) -> Iterable[str]:
                 if current != "":
                     yield current
 
+if __name__ == "__main__":
+    with open("dict_ro.txt", "wt") as out:
+        all_words = words | {word for word in LOOKUP} | {lemma for word, lemma in LOOKUP.items()}
+        all_words = sorted(list(all_words))
+        for word in all_words:
+            out.write(word + "\n")
 
