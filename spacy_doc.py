@@ -14,6 +14,9 @@ models = {
     'en': 'en',
     'nl': 'nl',
     'fr': 'fr',
+    'es': 'es',
+    'de': 'de',
+    'it': 'it',
     'ro': 'models/model3'
 }
 
@@ -26,6 +29,28 @@ normalization = {
         (re.compile("(\w)î(\w)"), "\g<1>â\g<2>")
     ]
 }
+
+def convertToPenn(pos: str, lang: str) -> str:
+    if lang != 'ro':
+        if len(pos) > 2:
+            return pos[:2]
+        return pos
+    pos = pos.lower()
+    if pos.startswith("n"):
+        return "NN"
+    if pos.startwith("v"):
+        return "VB"
+    if pos.startwith("a"):
+        return "JJ"
+    if pos.startwith("r"):
+        return "RB"
+    if pos.startwith("s") or pos.startswith("cs"):
+        return "IN"
+    if pos.startwith("c"):
+        return "CC"
+    return ""
+    
+
 class SpacyDoc:
 
     def __init__(self):
@@ -105,7 +130,7 @@ class SpacyDoc:
                     wp = {"text" : w.text}
                     wp["index"] = w.i
                     wp["lemma"] = w.lemma_
-                    wp["pos"] = w.tag_
+                    wp["pos"] = convertToPenn(w.tag_, lang)
                     wp["dep"] = w.dep_
                     wp["ner"] = w.ent_type_
                     wp["head"] = w.head.i
