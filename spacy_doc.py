@@ -86,13 +86,11 @@ class SpacyDoc:
         return doc
 
 
-    def process(self, blocks : List, lang: str):
-        result = list()
-
-        for block in blocks:
-            res = {"block" : block}
-            sents = sent_tokenize(block)
-            res["sentences"] = list()
+    def process(self, doc):
+        lang = doc["lang"]
+        for block in doc["blocks"]:
+            sents = sent_tokenize(block["text"])
+            block["sentences"] = list()
 
             for sent in sents:
                 ne = self.ner(sent)
@@ -100,7 +98,7 @@ class SpacyDoc:
                 # print(ne)
                 # print(pos)
                 res_sent = {}
-                res_sent["sentence"] = sent
+                res_sent["text"] = sent
                 res_sent["words"] = []
                 # get pos tags 
                 for w in tokens:
@@ -118,12 +116,8 @@ class SpacyDoc:
                         # or (' ' in ent[0] and w["word"] in ent[0])
                         if w["index"] == ent.i:
                             w["ner"] = ent.ent_type_
-
-
-                res["sentences"].append(res_sent)
-            result.append(res)
-
-        return result   
+                block["sentences"].append(res_sent)
+        return doc   
 
 if __name__ == "__main__":
     spacyInstance = SpacyDoc()
@@ -140,5 +134,5 @@ if __name__ == "__main__":
     # print(spacyInstance.get_ner(sent))
     # print(spacyInstance.get_tokens_lemmas(sent))
     for token in spacyInstance.parse(sent, 'ro'):
-        print(token.pos_)
+        print(token.tag_)
     # print(spacyInstance.preprocess("coborî", 'ro'))
