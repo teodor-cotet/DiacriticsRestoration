@@ -44,7 +44,8 @@ def log_entropy_norm(corpus: List) -> List:
     return result
 
 
-def train_lsa(docs: List, outputFolder: str):
+def train_lsa(docs: Iterable, outputFolder: str):
+    docs = list(docs)
     id2word = Dictionary(docs)
     id2word.filter_extremes(no_below=20, no_above=0.1, keep_n=1000000)
     corpus = [id2word.doc2bow(doc) for doc in docs]
@@ -83,8 +84,10 @@ if __name__ == "__main__":
     inputFolder= "RO/ReadME"
     parser = SpacyDoc()
     print("Loading dataset...")
-    sentences = preprocess(parser, inputFolder, 'ro', split_sent=False)
+    sentences = preprocess(parser, inputFolder, 'ro', split_sent=False, only_dict_words=True)
     # train_w2v(sentences, inputFolder)
     train_lsa(sentences, inputFolder)
     # train_lda(sentences, inputFolder)
-    
+    # model = LsiModel.load(inputFolder + "/lsa.bin")
+    # print(model.projection.s)
+    # print(model.get_topics())
