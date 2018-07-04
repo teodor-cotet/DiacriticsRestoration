@@ -1,5 +1,7 @@
 from flask import Flask, request, abort, jsonify, render_template, flash, Response
 import spacy
+from StringKernels import SpectrumStringKernel, IntersectionStringKernel, PresenceStringKernel
+import numpy as np
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -27,8 +29,16 @@ def match_response():
 
     answers = [nlp(answer['text']) for answer in request.json['options'] if len(answer['text'].strip()) > 0]
     user_answer = nlp(request.json['input']['text'])
-    
-    scores = [{"score": answer.similarity(user_answer)} for answer in answers]
+    kernels = [PresenceStringKernel, IntersectionStringKernel, SpectrumStringKernel]
+    sk_scores = [kernel.compute_kernel_string_listofstrings(
+            user_answer.text, 
+            [answer.text for answer in answers], 
+            3, 7, normalize=True)
+        for kernel in kernels]
+    sk_scores = [np.mean([score[i] for score in sk_scores]) for i, _ in enumerate(sk_scores[0])]
+    spacy_scores = [answer.similarity(user_answer) for answer in answers]
+        
+    scores = [{"score": (sk + sp) / 2} for sk, sp in zip(sk_scores, spacy_scores)]
     
     data = {"scoresPerOption" : scores}
     result = {"result": data, "success": True, "errorMsg": ""}
@@ -40,5 +50,5 @@ def match_response():
     return response, 200
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=8081, debug=False)
+    app.run(host="0.0.0.0", port=8080, debug=False)
     

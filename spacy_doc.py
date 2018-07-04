@@ -11,7 +11,7 @@ import re
 # }
 
 models = {
-    'en': 'en',
+    'en': 'en_coref_sm',
     'nl': 'nl',
     'fr': 'fr',
     'es': 'es',
@@ -158,6 +158,7 @@ if __name__ == "__main__":
 
     # print(spacyInstance.get_ner(sent))
     # print(spacyInstance.get_tokens_lemmas(sent))
-    for token in spacyInstance.parse(sent, 'ro'):
-        print(token.tag_)
+    doc = spacyInstance.parse("My sister has a dog. She loves him.", 'en')
+    print(doc._.has_coref)
+    print(doc._.coref_clusters)
     # print(spacyInstance.preprocess("coborî", 'ro'))
