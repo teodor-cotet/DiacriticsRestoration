@@ -1,6 +1,7 @@
 from flask import Flask, request, abort, jsonify, render_template, flash, Response
 import spacy
-from StringKernels import SpectrumStringKernel, IntersectionStringKernel, PresenceStringKernel
+from spacy.tokens import Doc     
+from readerbench.core.StringKernels import SpectrumStringKernel, IntersectionStringKernel, PresenceStringKernel
 import numpy as np
 
 app = Flask(__name__)
@@ -18,6 +19,16 @@ def handle_options():
   
     return response, 200
 
+def similarity(a: Doc, b: Doc) -> float:
+    kernels = [PresenceStringKernel, IntersectionStringKernel, SpectrumStringKernel]
+    sk_scores = [kernel.compute_kernel_string_listofstrings(
+            a.text, 
+            [b.text], 
+            3, 7, normalize=True)
+        for kernel in kernels][0]
+    sk_score = np.mean([score for score in sk_scores])
+    spacy_score = a.similarity(b)
+    return (sk_score + spacy_score) / 2
 
 @app.route('/answer-matching', methods=['POST'])
 def match_response():
@@ -29,16 +40,8 @@ def match_response():
 
     answers = [nlp(answer['text']) for answer in request.json['options'] if len(answer['text'].strip()) > 0]
     user_answer = nlp(request.json['input']['text'])
-    kernels = [PresenceStringKernel, IntersectionStringKernel, SpectrumStringKernel]
-    sk_scores = [kernel.compute_kernel_string_listofstrings(
-            user_answer.text, 
-            [answer.text for answer in answers], 
-            3, 7, normalize=True)
-        for kernel in kernels]
-    sk_scores = [np.mean([score[i] for score in sk_scores]) for i, _ in enumerate(sk_scores[0])]
-    spacy_scores = [answer.similarity(user_answer) for answer in answers]
         
-    scores = [{"score": (sk + sp) / 2} for sk, sp in zip(sk_scores, spacy_scores)]
+    scores = [{"score": similarity(user_answer, answer)} for answer in answers]
     
     data = {"scoresPerOption" : scores}
     result = {"result": data, "success": True, "errorMsg": ""}

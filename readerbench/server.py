@@ -1,11 +1,11 @@
 from flask import Flask, request, abort, jsonify, render_template, flash, Response
 import spacy
-from spacy_doc import SpacyDoc
+from core.spacy_parser import SpacyParser
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config['SECRET_KEY'] = '7d441f27d441f27123d441f2b6176a'
-spacyInstance = SpacyDoc()
+spacyInstance = SpacyParser()
 
 
 @app.route('/test', methods=['POST'])
@@ -15,7 +15,7 @@ def handle_get():
 
     print(request.json)
 
-    result = {"doc": {"blocks": [{"block": "Ana are mere", sentences: [{}]}]}}
+    result = {"doc": {"blocks": [{"block": "Ana are mere", "sentences": [{}]}]}}
     response = jsonify(result)
     return response, 200
 
@@ -28,4 +28,4 @@ def create_spacy_doc():
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=8081, debug=False)
+    app.run(host="0.0.0.0", port=8082, debug=False)

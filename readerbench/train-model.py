@@ -1,12 +1,12 @@
 from gensim.models.keyedvectors import KeyedVectors
 from gensim.models import Word2Vec, LdaMulticore, LsiModel 
 from gensim.corpora import Dictionary
-from utils import split_sentences, tokenize_docs, load_docs
+from core.utils import split_sentences, tokenize_docs, load_docs
 from typing import Dict, List, Iterable
 from os.path import dirname
 import numpy as np
 from itertools import islice
-from spacy_doc import SpacyDoc
+from core.spacy_parser import SpacyParser
 from math import log
 import time
 
@@ -18,6 +18,7 @@ def train_w2v(sentences: List, outputFolder: str):
     print("Model saved to ", path)
 
 def train_lda(docs: List, outputFolder: str):
+    docs = list(docs)
     id2word = Dictionary(docs)
     id2word.filter_extremes(no_below=20, no_above=0.1, keep_n=1000000)
     corpus = [id2word.doc2bow(doc) for doc in docs]
@@ -61,7 +62,7 @@ def train_lsa(docs: Iterable, outputFolder: str):
             f.write(id2word[idx] + " " + " ".join([str(x) for x in matrix[idx]]) + "\n")
     print("Model saved to ", path)
 
-def preprocess(parser: SpacyDoc, folder: str, lang: str, split_sent: bool = True, only_dict_words: bool = False) -> Iterable[List]:
+def preprocess(parser: SpacyParser, folder: str, lang: str, split_sent: bool = True, only_dict_words: bool = False) -> Iterable[List]:
     if only_dict_words:
         test = lambda x: not x.is_oov
     else:
@@ -81,13 +82,13 @@ def preprocess(parser: SpacyDoc, folder: str, lang: str, split_sent: bool = True
             yield result
 
 if __name__ == "__main__":
-    inputFolder= "RO/ReadME"
-    parser = SpacyDoc()
+    inputFolder= "resources/corpora/FR/Le Monde"
+    parser = SpacyParser()
     print("Loading dataset...")
-    sentences = preprocess(parser, inputFolder, 'ro', split_sent=False, only_dict_words=True)
+    sentences = preprocess(parser, inputFolder, 'fr', split_sent=False, only_dict_words=True)
     # train_w2v(sentences, inputFolder)
-    train_lsa(sentences, inputFolder)
-    # train_lda(sentences, inputFolder)
+    # train_lsa(sentences, inputFolder)
+    train_lda(sentences, inputFolder)
     # model = LsiModel.load(inputFolder + "/lsa.bin")
     # print(model.projection.s)
     # print(model.get_topics())

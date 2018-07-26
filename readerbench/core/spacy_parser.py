@@ -51,7 +51,7 @@ def convertToPenn(pos: str, lang: str) -> str:
     return ""
     
 
-class SpacyDoc:
+class SpacyParser:
 
     def __init__(self):
         self.ner = spacy.load('xx_ent_wiki_sm')
@@ -145,7 +145,7 @@ class SpacyDoc:
         return doc   
 
 if __name__ == "__main__":
-    spacyInstance = SpacyDoc()
+    spacyInstance = SpacyParser()
 
     sent = """
         După terminarea oficială a celui de-al doilea război mondial, în conformitate cu discursul lui W. Churchill (prim ministru al Regatului Unit la acea dată), de la Fulton, s-a declanșat Războiul rece și a apărut conceptul de cortină de fier. Urmare a politicii consecvente de apărare a sistemului economic și politic (implicit a intereslor economice ale marelui capital din lumea occidentală) trupele germane, în calitate de "prizonieri", aflate pe teritoriul Germaniei de Vest au fost reînarmate și au constituit baza viitorului "Bundeswehr" - armata regulată a R.F.G.
