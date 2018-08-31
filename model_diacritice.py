@@ -7,12 +7,16 @@ import string
 import tensorflow.keras as keras
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-window_size = 8
+window_size = 6
 epochs = 5
-embedding_size = 16
-cell_size = 32
+embedding_size = 14
+cell_size = 16
 classes = 4
 buffer_size_shuffle = 100000
+
+train_files = "corpus/train/"
+test_files = "corpus/test/"
+valid_files = "corpus/validation"
 
 maps_no_diac = {
 	'ă|â': 'a',
@@ -161,18 +165,23 @@ def get_dataset(dpath, batch_size=32):
 
 with tf.Session() as sess:
 
-	dt_train, inp_batches_train, max_unicode_train = get_dataset("biblior-ro/txt/train/")
-	dt_test, inp_batches_test, max_unicode_test = get_dataset("biblior-ro/txt/test/")
+	dt_train, inp_batches_train, max_unicode_train = get_dataset(train_files)
+	dt_valid, inp_batches_valid, max_unicode_valid = get_dataset(valid_files)
+	dt_test, inp_batches_test, max_unicode_test = get_dataset(test_files)
 	
 	print(inp_batches_train, max_unicode_train)
 	print(inp_batches_test, max_unicode_test)
+	print(inp_batches_valid, max_unicode_valid)
 
-	vocabulary_size = max(max_unicode_train, max_unicode_test) + 1
+	vocabulary_size = max(max_unicode_train, max_unicode_test, max_unicode_valid) + 1
 
 	iterator_train = dt_train.make_initializable_iterator()
 	iterator_test = dt_test.make_initializable_iterator()
+	iterator_valid = dt_valid.make_initializable_iterator()
+
 	sess.run(iterator_train.initializer)
 	sess.run(iterator_test.initializer)
+	sess.run(iterator_valid.initializer)
 
 	model = keras.models.Sequential()
 	model.add(keras.layers.Embedding(vocabulary_size, 
@@ -187,5 +196,8 @@ with tf.Session() as sess:
 	for _ in range(epochs):
 		model.fit(iterator_train, steps_per_epoch=inp_batches_train // epochs,
 			 epochs=1, verbose=2)
-		[loss, acc] = model.evaluate(iterator_test, verbose=1, steps=inp_batches_test // epochs)
-		print("test - loss: " + str(loss) + " acc: " + str(acc))
+		#validation
+		[loss, acc] = model.evaluate(iterator_valid, verbose=1, steps=inp_batches_test // epochs)
+		print("validation - loss: " + str(loss) + " acc: " + str(acc))
+	[loss, acc] = model.evaluate(iterator_valid, verbose=1, steps=inp_batches_test // epochs)
+	print("test - loss: " + str(loss) + " acc: " + str(acc))
