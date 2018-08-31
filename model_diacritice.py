@@ -13,10 +13,12 @@ embedding_size = 14
 cell_size = 16
 classes = 4
 buffer_size_shuffle = 100000
+max_unicode_allowed = 770
+safety_batches = 10000
 
 train_files = "corpus/train/"
 test_files = "corpus/test/"
-valid_files = "corpus/validation"
+valid_files = "corpus/validation/"
 
 maps_no_diac = {
 	'ă|â': 'a',
@@ -58,8 +60,11 @@ def create_windows(s, s2):
 		for j in range(-window_size, window_size + 1):
 			if i + j < 0 or i + j >= len(su):
 				v1 = np.int32(0)
+			elif ord(su[i + j]) > max_unicode_allowed:
+				v1 = np.int32(767)
 			else:
 				v1 = np.int32(ord(su[i + j]))
+
 			w.append(v1)
 		windows.append(w)
 		case = 2
@@ -149,31 +154,19 @@ def get_dataset(dpath, batch_size=32):
 	iterator = dataset.make_initializable_iterator()
 	sess.run(iterator.initializer)
 	next_element = iterator.get_next()
-	inp_batches = 0
-	max_unicode = -1
-	while True:
-		try:
-			a, b = sess.run(next_element)
-			inp_batches += 1
-			for sample in a:
-				for c in sample:
-					if c > max_unicode:
-						max_unicode = c
-		except tf.errors.OutOfRangeError:
-			break
-	return dataset, inp_batches, max_unicode
+	return dataset
 
 with tf.Session() as sess:
 
-	dt_train, inp_batches_train, max_unicode_train = get_dataset(train_files)
-	dt_valid, inp_batches_valid, max_unicode_valid = get_dataset(valid_files)
-	dt_test, inp_batches_test, max_unicode_test = get_dataset(test_files)
-	
-	print(inp_batches_train, max_unicode_train)
-	print(inp_batches_test, max_unicode_test)
-	print(inp_batches_valid, max_unicode_valid)
+	dt_train = get_dataset(train_files)
+	dt_valid = get_dataset(valid_files)
+	dt_test = get_dataset(test_files)
 
-	vocabulary_size = max(max_unicode_train, max_unicode_test, max_unicode_valid) + 1
+	inp_batches_train = 53466641 - safety_batches
+	inp_batches_test = 19519106 - safety_batches
+	inp_batches_valid = 19926940 - safety_batches
+
+	vocabulary_size = max_unicode_allowed + 1
 
 	iterator_train = dt_train.make_initializable_iterator()
 	iterator_test = dt_test.make_initializable_iterator()
@@ -194,10 +187,10 @@ with tf.Session() as sess:
 		metrics = ['acc'])
 	
 	for _ in range(epochs):
-		model.fit(iterator_train, steps_per_epoch=inp_batches_train // epochs,
+		model.fit(iterator_train, steps_per_epoch=(inp_batches_train // epochs),
 			 epochs=1, verbose=2)
 		#validation
-		[loss, acc] = model.evaluate(iterator_valid, verbose=1, steps=inp_batches_test // epochs)
+		[loss, acc] = model.evaluate(iterator_valid, verbose=1, steps=(inp_batches_valid // epochs))
 		print("validation - loss: " + str(loss) + " acc: " + str(acc))
-	[loss, acc] = model.evaluate(iterator_valid, verbose=1, steps=inp_batches_test // epochs)
+	[loss, acc] = model.evaluate(iterator_test, verbose=1, steps=inp_batches_test)
 	print("test - loss: " + str(loss) + " acc: " + str(acc))
