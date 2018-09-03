@@ -6,7 +6,7 @@ import re
 import string
 import tensorflow.keras as keras
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 window_size = 6
 epochs = 5
 embedding_size = 14
@@ -187,10 +187,14 @@ with tf.Session() as sess:
 		metrics = ['acc'])
 	
 	for _ in range(epochs):
-		model.fit(iterator_train, steps_per_epoch=(inp_batches_train // epochs),
-			 epochs=1, verbose=2)
+		model.fit(iterator_train, 
+			 steps_per_epoch=inp_batches_train // epochs,
+			 epochs=1, 
+			 verbose=1,
+			 validation_data=iterator_valid,
+			 validation_steps=inp_batches_valid // 1)
 		#validation
-		[loss, acc] = model.evaluate(iterator_valid, verbose=1, steps=(inp_batches_valid // epochs))
-		print("validation - loss: " + str(loss) + " acc: " + str(acc))
+		#[loss, acc] = model.evaluate(iterator_valid, verbose=1, steps=(inp_batches_valid // epochs))
+		#print("validation - loss: " + str(loss) + " acc: " + str(acc))
 	[loss, acc] = model.evaluate(iterator_test, verbose=1, steps=inp_batches_test)
 	print("test - loss: " + str(loss) + " acc: " + str(acc))
