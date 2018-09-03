@@ -9,8 +9,8 @@ import tensorflow.keras as keras
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 window_size = 6
 epochs = 5
-embedding_size = 14
-cell_size = 16
+embedding_size = 20
+cell_size = 64
 classes = 4
 buffer_size_shuffle = 100000
 max_unicode_allowed = 770
@@ -160,7 +160,7 @@ with tf.Session() as sess:
 
 	dt_train = get_dataset(train_files)
 	dt_valid = get_dataset(valid_files)
-	dt_test = get_dataset(test_files)
+	# dt_test = get_dataset(test_files)
 
 	inp_batches_train = 53466641 - safety_batches
 	inp_batches_test = 19519106 - safety_batches
@@ -169,18 +169,18 @@ with tf.Session() as sess:
 	vocabulary_size = max_unicode_allowed + 1
 
 	iterator_train = dt_train.make_initializable_iterator()
-	iterator_test = dt_test.make_initializable_iterator()
+	# iterator_test = dt_test.make_initializable_iterator()
 	iterator_valid = dt_valid.make_initializable_iterator()
 
 	sess.run(iterator_train.initializer)
-	sess.run(iterator_test.initializer)
+	#sess.run(iterator_test.initializer)
 	sess.run(iterator_valid.initializer)
 
 	model = keras.models.Sequential()
 	model.add(keras.layers.Embedding(vocabulary_size, 
 		embedding_size, input_length=window_size * 2 + 1))
 	model.add(keras.layers.Bidirectional(keras.layers.LSTM(cell_size)))
-	model.add(keras.layers.Dense(2 * cell_size, activation = 'tanh'))
+	model.add(keras.layers.Dense(64, activation = 'tanh'))
 	model.add(keras.layers.Dense(classes, activation = 'softmax'))
 
 	model.compile(optimizer='adam', loss='categorical_crossentropy', 
@@ -192,5 +192,5 @@ with tf.Session() as sess:
 		#validation
 		[loss, acc] = model.evaluate(iterator_valid, verbose=1, steps=(inp_batches_valid // epochs))
 		print("validation - loss: " + str(loss) + " acc: " + str(acc))
-	[loss, acc] = model.evaluate(iterator_test, verbose=1, steps=inp_batches_test)
-	print("test - loss: " + str(loss) + " acc: " + str(acc))
+	# [loss, acc] = model.evaluate(iterator_test, verbose=1, steps=inp_batches_test)
+	# print("test - loss: " + str(loss) + " acc: " + str(acc))
