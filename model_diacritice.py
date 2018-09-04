@@ -15,6 +15,7 @@ classes = 4
 buffer_size_shuffle = 100000
 max_unicode_allowed = 770
 safety_batches = 10000
+batch_size = 128
 
 train_files = "corpus/train/"
 test_files = "corpus/test/"
@@ -114,7 +115,7 @@ def filt(x):
 		return np.array([True])
 	return np.array([False])
 
-def get_dataset(dpath, batch_size=32):
+def get_dataset(dpath):
 
 	to_lower = create_lower_mapping()
 	input_files = tf.gfile.ListDirectory(dpath)
@@ -162,9 +163,9 @@ with tf.Session() as sess:
 	dt_valid = get_dataset(valid_files)
 	# dt_test = get_dataset(test_files)
 
-	inp_batches_train = 53466641 - safety_batches
-	inp_batches_test = 19519106 - safety_batches
-	inp_batches_valid = 19926940 - safety_batches
+	inp_batches_train = (53466641 - safety_batches) // batch_size
+	inp_batches_test = (19519106 - safety_batches) // batch_size
+	inp_batches_valid = (19926940 - safety_batches) //batch_size
 
 	vocabulary_size = max_unicode_allowed + 1
 
@@ -188,8 +189,8 @@ with tf.Session() as sess:
 	
 	for _ in range(epochs):
 		model.fit(iterator_train, 
-			 steps_per_epoch=inp_batches_train // epochs,
+			 steps_per_epoch=inp_batches_train,
 			 epochs=1, 
 			 verbose=1,
 			 validation_data=iterator_valid,
-			 validation_steps=inp_batches_valid // 1)
+			 validation_steps=inp_batches_valid)
