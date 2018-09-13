@@ -20,8 +20,9 @@ epochs = 25
 reset_iterators_every_epochs = 5
 cell_size = 64
 classes = 4
-batch_size = 64
+batch_size = 256
 
+CPUS = 16
 buffer_size_shuffle = 100000
 max_unicode_allowed = 770
 replace_character = 255
@@ -252,7 +253,7 @@ def create_examples(clean_text, original_text):
 	labels = []
 	while index_sent < len(clean_tokens):
 		clean_token = clean_tokens[index_sent][index_token]
-		index_text = discard_first_chars(index_text, clean_text_utf, clean_token)
+#		index_text = discard_first_chars(index_text, clean_text_utf, clean_token)
 		i = 0		
 		while i < len(clean_token):
 			label = get_label(index_text, clean_text_utf, original_text_utf)
@@ -298,22 +299,22 @@ def get_dataset(dpath, sess):
 
 	for m in to_lower:
 		dataset = dataset.map(lambda x: 
-			tf.regex_replace(x, tf.constant(m), tf.constant(to_lower[m])))
-	dataset = dataset.map(lambda x: (x, x))
+			tf.regex_replace(x, tf.constant(m), tf.constant(to_lower[m])), num_parallel_calls=CPUS)
+	dataset = dataset.map(lambda x: (x, x), num_parallel_calls=CPUS)
 
 	for m in correct_diac:
 		dataset = dataset.map(lambda x, y:
-			(tf.regex_replace(x, tf.constant(m), tf.constant(correct_diac[m])),
-			tf.regex_replace(y, tf.constant(m), tf.constant(correct_diac[m]))))
+			(tf.regex_replace(x, tf.constant(m), tf.constant(correct_diac[m]), num_parallel_calls=CPUS),
+			tf.regex_replace(y, tf.constant(m), tf.constant(correct_diac[m]))), num_parallel_calls=CPUS)
 		
 	for m in maps_no_diac:
 	 	dataset = dataset.map(lambda x, y: 
-			(tf.regex_replace(x, tf.constant(m), tf.constant(maps_no_diac[m])), y))
+			(tf.regex_replace(x, tf.constant(m), tf.constant(maps_no_diac[m])), y), num_parallel_calls=CPUS)
 
 	dataset = dataset.map(lambda x, y: 
-		tf.py_func(create_examples, (x, y), (tf.int32, tf.float32, tf.float32, tf.float32), stateful=False))
+		tf.py_func(create_examples, (x, y), (tf.int32, tf.float32, tf.float32, tf.float32), stateful=False), num_parallel_calls=CPUS)
 
-	dataset = dataset.map(lambda x1, x2, x3, y: ((x1, x2, x3), y))
+	dataset = dataset.map(lambda x1, x2, x3, y: ((x1, x2, x3), y), num_parallel_calls=CPUS)
 	dataset = dataset.flat_map(flat_map_f)
 	
 	filter_chars = lambda x, y: \
@@ -368,11 +369,15 @@ with tf.Session() as sess:
 
 	# sentence token
 	sentence_embeddings_layer = keras.layers.Input(shape=((window_sentence * 2 + 1) * word_embedding_size,))
+	sentence_lstm_layer = keras.layers.LSTM(units=300, input_shape=(window_sentence * 2 + 1, word_embedding_size,))
 
+	sentence_bi_lstm_layer = keras.layers.Bidirectional(
+                                                        layer=sentence_lstm_layer,\
+                                                        merge_mode="concat")(sentence_embeddings_layer)
 	merged_layer = keras.layers.concatenate([bi_lstm_layer, \
-				word_embeddings_layer, sentence_embeddings_layer], axis=-1)
+				word_embeddings_layer, sentence_bi_lstm_layer], axis=-1)
 
-	dense_layer = keras.layers.Dense(2 * cell_size, activation='tanh')(merged_layer)
+	dense_layer = keras.layers.Dense(512, activation='tanh')(merged_layer)
 	output = keras.layers.Dense(classes, activation='softmax')(dense_layer)
 
 	model = keras.models.Model(inputs=[input_character_window, word_embeddings_layer, sentence_embeddings_layer],\
