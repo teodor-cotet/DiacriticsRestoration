@@ -29,12 +29,12 @@ padding_character = 0
 
 model_embeddings = FastTextWrapper.load_fasttext_format("fastText/wiki.ro")
 
-# train_files = "small_train/"
-# valid_files = "small_valid/"
-# test_files = "small_test/"
-train_files = "corpus/train/"
-test_files = "corpus/test/"
-valid_files = "corpus/validation/"
+train_files = "small_train/"
+valid_files = "small_valid/"
+test_files = "small_test/"
+# train_files = "corpus/train/"
+# test_files = "corpus/test/"
+# valid_files = "corpus/validation/"
 fast_text_embeddings_file = "fastText/wiki.ro.vec"
 
 maps_no_diac = {
@@ -252,7 +252,7 @@ def create_examples(clean_text, original_text):
 	labels = []
 	while index_sent < len(clean_tokens):
 		clean_token = clean_tokens[index_sent][index_token]
-		index_text = discard_first_chars(index_text, clean_text_utf, clean_token)
+		#index_text = discard_first_chars(index_text, clean_text_utf, clean_token)
 		i = 0		
 		while i < len(clean_token):
 			label = get_label(index_text, clean_text_utf, original_text_utf)
@@ -334,13 +334,13 @@ with tf.Session() as sess:
 	dt_valid = get_dataset(valid_files, sess)
 	dt_test = get_dataset(test_files, sess)
 
-	inp_batches_train = 380968863 // batch_size
-	inp_batches_test = 131424533 // batch_size
-	inp_batches_valid = 131861863 // batch_size
+	# inp_batches_train = 380968863 // batch_size
+	# inp_batches_test = 131424533 // batch_size
+	# inp_batches_valid = 131861863 // batch_size
 
-	# inp_batches_train = 2767148 // batch_size
-	# inp_batches_test = 2070554 // batch_size
-	# inp_batches_valid = 3392290 // batch_size
+	inp_batches_train = 186156 // batch_size
+	inp_batches_test = 353519 // batch_size
+	inp_batches_valid = 268910 // batch_size
 
 	vocabulary_size = max_unicode_allowed + 1
 
