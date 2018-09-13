@@ -16,26 +16,28 @@ window_character = 6 # 2 * x + 1
 character_embedding_size = 20
 word_embedding_size = 300
 
-epochs = 25
+epochs = 15
 reset_iterators_every_epochs = 5
-cell_size = 64
+characters_cell_size = 64
+sentence_cell_size = 300
+neurons_dense_layer_after_merge = 512
 classes = 4
 batch_size = 256
 
 CPUS = 16
-buffer_size_shuffle = 100000
+buffer_size_shuffle = 10000
 max_unicode_allowed = 770
 replace_character = 255
 padding_character = 0
 
-model_embeddings = FastTextWrapper.load_fasttext_format("~/corpora/RO/fastText/wiki.ro")
+model_embeddings = FastTextWrapper.load_fasttext_format("fastText/wiki.ro")
 
-train_files = "small_train/"
-valid_files = "small_valid/"
-test_files = "small_test/"
-# train_files = "corpus/train/"
-# test_files = "corpus/test/"
-# valid_files = "corpus/validation/"
+# train_files = "small_train/"
+# valid_files = "small_valid/"
+# test_files = "small_test/"
+train_files = "corpus/train/"
+test_files = "corpus/test/"
+valid_files = "corpus/validation/"
 fast_text_embeddings_file = "fastText/wiki.ro.vec"
 
 maps_no_diac = {
@@ -161,26 +163,25 @@ def get_avg_possible_word(clean_word):
 	else:
 		try:
 			return np.float32(model_embeddings.wv[clean_word]) 
+			#return np.float32([0] * word_embedding_size)
 		except:
 			return np.float32([0] * word_embedding_size)
 
 def get_embeddings_sentence(clean_tokens_sentence, index_token):
 	#if index_token == -1:
 	#	return np.float32(np.zeros((window_sentence, word_embedding_size)))
-	embeddings_sentence = np.float32([])
+	embeddings_sentence = []
 
 	for i in range(-window_sentence, window_sentence + 1):
 		if index_token + i >= 0 and index_token + i < len(clean_tokens_sentence):
 			token = clean_tokens_sentence[index_token + i]
 			try:
-				embeddings_sentence = np.concatenate( (embeddings_sentence,\
-			 		np.float32(model_embeddings.wv[token])))
+				embeddings_sentence.append(np.float32(model_embeddings.wv[token]))
+				#embeddings_sentence.append(np.float32([0] * word_embedding_size))
 			except:
-				embeddings_sentence = np.concatenate( (embeddings_sentence,\
-			 		np.float32([0] * word_embedding_size) ))
+				embeddings_sentence.append(np.float32([0] * word_embedding_size))
 		else:
-			embeddings_sentence = np.concatenate( (embeddings_sentence,\
-			 		np.float32([0] * word_embedding_size)))
+			embeddings_sentence.append(np.float32([0] * word_embedding_size))
 	return np.array(embeddings_sentence)
 	#return np.array(embeddings_sentence)
 
@@ -304,8 +305,8 @@ def get_dataset(dpath, sess):
 
 	for m in correct_diac:
 		dataset = dataset.map(lambda x, y:
-			(tf.regex_replace(x, tf.constant(m), tf.constant(correct_diac[m]), num_parallel_calls=CPUS),
-			tf.regex_replace(y, tf.constant(m), tf.constant(correct_diac[m]))), num_parallel_calls=CPUS)
+			(tf.regex_replace(x, tf.constant(m), tf.constant(correct_diac[m])),
+			tf.regex_replace(y, tf.constant(m), tf.constant(correct_diac[m])),), num_parallel_calls=CPUS)
 		
 	for m in maps_no_diac:
 	 	dataset = dataset.map(lambda x, y: 
@@ -335,13 +336,13 @@ with tf.Session() as sess:
 	dt_valid = get_dataset(valid_files, sess)
 	dt_test = get_dataset(test_files, sess)
 
-	# inp_batches_train = 380968863 // batch_size
-	# inp_batches_test = 131424533 // batch_size
-	# inp_batches_valid = 131861863 // batch_size
+	inp_batches_train = 380968863 // batch_size
+	inp_batches_test = 131424533 // batch_size
+	inp_batches_valid = 131861863 // batch_size
 
-	inp_batches_train = 186156 // batch_size
-	inp_batches_test = 353519 // batch_size
-	inp_batches_valid = 268910 // batch_size
+	# inp_batches_train = 10650 // batch_size
+	# inp_batches_test = 3978 // batch_size
+	# inp_batches_valid = 50490 // batch_size
 
 	vocabulary_size = max_unicode_allowed + 1
 
@@ -357,27 +358,27 @@ with tf.Session() as sess:
 								input_dim=vocabulary_size,\
 								output_dim=character_embedding_size)(input_character_window)
 
-	lstm_layer = keras.layers.LSTM(
-							units=cell_size,\
+	character_lstm_layer = keras.layers.LSTM(
+							units=characters_cell_size,\
 							input_shape=(window_character * 2 + 1, character_embedding_size,))
 
-	bi_lstm_layer = keras.layers.Bidirectional(
-							layer=lstm_layer,\
+	characters_bi_lstm_layer = keras.layers.Bidirectional(
+							layer=character_lstm_layer,\
 							merge_mode="concat")(character_embeddings_layer)
 	# word token					
 	word_embeddings_layer = keras.layers.Input(shape=(word_embedding_size,))
 
 	# sentence token
-	sentence_embeddings_layer = keras.layers.Input(shape=((window_sentence * 2 + 1) * word_embedding_size,))
-	sentence_lstm_layer = keras.layers.LSTM(units=300, input_shape=(window_sentence * 2 + 1, word_embedding_size,))
+	sentence_embeddings_layer = keras.layers.Input(shape=((window_sentence * 2 + 1, word_embedding_size,)))
+	sentence_lstm_layer = keras.layers.LSTM(units=sentence_cell_size,\
+											input_shape=(window_sentence * 2 + 1, word_embedding_size,))	
 
-	sentence_bi_lstm_layer = keras.layers.Bidirectional(
-                                                        layer=sentence_lstm_layer,\
+	sentence_bi_lstm_layer = keras.layers.Bidirectional(layer=sentence_lstm_layer,\
                                                         merge_mode="concat")(sentence_embeddings_layer)
-	merged_layer = keras.layers.concatenate([bi_lstm_layer, \
+	merged_layer = keras.layers.concatenate([characters_bi_lstm_layer, \
 				word_embeddings_layer, sentence_bi_lstm_layer], axis=-1)
 
-	dense_layer = keras.layers.Dense(512, activation='tanh')(merged_layer)
+	dense_layer = keras.layers.Dense(neurons_dense_layer_after_merge, activation='tanh')(merged_layer)
 	output = keras.layers.Dense(classes, activation='softmax')(dense_layer)
 
 	model = keras.models.Model(inputs=[input_character_window, word_embeddings_layer, sentence_embeddings_layer],\
