@@ -39,12 +39,12 @@ padding_character = 0
 
 model_embeddings = FastTextWrapper.load_fasttext_format("fastText/wiki.ro")
 
-train_files = "small_train/"
-valid_files = "small_valid/"
-test_files = "small_test/"
-# train_files = "corpus/train/"
-# test_files = "corpus/test/"
-# valid_files = "corpus/validation/"
+# train_files = "small_train/"
+# valid_files = "small_valid/"
+# test_files = "small_test/"
+train_files = "corpus/train/"
+test_files = "corpus/test/"
+valid_files = "corpus/validation/"
 
 maps_no_diac = {
 	'ă': 'a',
@@ -362,17 +362,17 @@ with tf.Session() as sess:
 	dt_valid = get_dataset(valid_files, sess)
 	dt_test = get_dataset(test_files, sess)
 
-	# inp_batches_train = 380968863 // batch_size
-	# inp_batches_test = 131424533 // batch_size
-	# inp_batches_valid = 131861863 // batch_size
+	inp_batches_train = 380968863 // batch_size
+	inp_batches_test = 131424533 // batch_size
+	inp_batches_valid = 131861863 // batch_size
 
 	# inp_batches_train = 10650 // batch_size
 	# inp_batches_test = 3978 // batch_size
 	# inp_batches_valid = 50490 // batch_size
 
-	inp_batches_train = 1650 // batch_size
-	inp_batches_test = 3978 // batch_size
-	inp_batches_valid = 1490 // batch_size
+	# inp_batches_train = 1650 // batch_size
+	# inp_batches_test = 3978 // batch_size
+	# inp_batches_valid = 1490 // batch_size
 
 
 	vocabulary_size = max_unicode_allowed + 1
