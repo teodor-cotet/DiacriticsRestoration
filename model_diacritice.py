@@ -5,9 +5,13 @@ import unidecode
 import re
 import string
 from tensorflow import keras
+from tensorflow import profiler
+from tensorflow.python.client import timeline
+
 import nltk
 from gensim.models.wrappers import FastText as FastTextWrapper
 import threading
+import cProfile
 
 dict_lock = threading.Lock()
 dict_avg_words = {}
@@ -18,8 +22,8 @@ window_character = 6 # 2 * x + 1
 character_embedding_size = 20
 word_embedding_size = 300
 
-epochs = 20
-reset_iterators_every_epochs = 10
+epochs = 4
+reset_iterators_every_epochs = 2
 characters_cell_size = 64
 sentence_cell_size = 300
 neurons_dense_layer_after_merge = 512
@@ -28,19 +32,19 @@ batch_size = 256
 limit_backtracking_characters = 10
 
 CPUS = 16
-buffer_size_shuffle = 10000
+buffer_size_shuffle = 500000
 max_unicode_allowed = 770
 replace_character = 255
 padding_character = 0
 
 model_embeddings = FastTextWrapper.load_fasttext_format("fastText/wiki.ro")
 
-# train_files = "small_train/"
-# valid_files = "small_valid/"
-# test_files = "small_test/"
-train_files = "corpus/train/"
-test_files = "corpus/test/"
-valid_files = "corpus/validation/"
+train_files = "small_train/"
+valid_files = "small_valid/"
+test_files = "small_test/"
+# train_files = "corpus/train/"
+# test_files = "corpus/test/"
+# valid_files = "corpus/validation/"
 
 maps_no_diac = {
 	'ă': 'a',
@@ -62,10 +66,12 @@ correct_diac = {
 	"Ţ": "Ț",
 }
 
+characters_in_interes = {'a', 'i', 's', 't'}
+to_lower = {}
+
 substitute_chars = {'"': '`'}
         
 def create_lower_mapping():
-	to_lower = { }
 	for c in  string.ascii_uppercase:
 		to_lower[c] = c.lower()
 	to_lower['Ș'] = 'ș'
@@ -73,7 +79,6 @@ def create_lower_mapping():
 	to_lower['Ă'] = 'ă'
 	to_lower['Ț'] = 'ț'
 	to_lower['Î'] = 'î'
-	return to_lower
 
 def get_label(i, clean_text_utf, original_text_utf):
 
@@ -140,6 +145,7 @@ def get_avg_possible_word(clean_word):
 	
 	if count_diacritics_chars > limit_backtracking_characters:
 		return np.float32(model_embeddings.wv[clean_word])
+		#return np.float32([0] * word_embedding_size)
 
 	all_words = bkt_all_words(0, clean_word, "", maps_char_to_possible_chars)
 	dict_words = []
@@ -221,6 +227,16 @@ def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, inde
 	#return np.int32(np.array([0])), np.int32(np.array([0, 0])),  np.int32(np.array([0, 0, 0]))
 
 def replace_char(c):
+
+	if c in correct_diac:
+		c = correct_diac[c]
+
+	if c in to_lower:
+		c = to_lower[c]
+
+	if c in maps_no_diac:
+		c = maps_no_diac[c]
+
 	if ord(c) > 255:
 		return chr(replace_character)
 	elif c in substitute_chars:
@@ -228,17 +244,12 @@ def replace_char(c):
 	else:
 		return c
 
-def create_examples(clean_text, original_text):
-	clean_text_utf = clean_text.decode('utf-8')
-	# replace some strange characters which are modified by tokenization
-	clean_text_utf_replaced = ""
-	clean_text_utf_replaced = [replace_char(c) for c in clean_text_utf]
-
-	clean_text_utf = clean_text_utf_replaced
+def create_examples(original_text):
 	original_text_utf = original_text.decode('utf-8')
-	
-	clean_sentences = nltk.sent_tokenize(clean_text_utf)
+	# replace some strange characters which are modified by tokenization
+	clean_text_utf = "".join([replace_char(c) for c in original_text_utf])
 
+	clean_sentences = nltk.sent_tokenize(clean_text_utf)
 	clean_tokens = []
 
 	# construct tokens
@@ -258,24 +269,36 @@ def create_examples(clean_text, original_text):
 #		index_text = discard_first_chars(index_text, clean_text_utf, clean_token)
 		i = 0		
 		while i < len(clean_token):
-			label = get_label(index_text, clean_text_utf, original_text_utf)
-			win_char, word_emb, sent_emb = get_input_example(clean_text_utf, \
+			if clean_text_utf[index_text] in characters_in_interes:
+
+				label = get_label(index_text, clean_text_utf, original_text_utf)
+				win_char, word_emb, sent_emb = get_input_example(clean_text_utf, \
 						index_text, clean_tokens, index_sent, index_token)
+
+				window_characters.append(win_char)
+				word_embeddings.append(word_emb)
+				sentence_embeddings.append(sent_emb)
+				labels.append(label)
+
 			if clean_text_utf[index_text] == clean_token[i]:
 				index_text += 1
 				i += 1
 			else: # discard char in text
 				index_text += 1
-			window_characters.append(win_char)
-			word_embeddings.append(word_emb)
-			sentence_embeddings.append(sent_emb)
-			labels.append(label)
+			
 
 		if index_token == len(clean_tokens[index_sent]) - 1:
 			index_token = 0
 			index_sent += 1
 		else:
 			index_token += 1
+
+	if len(window_characters) == 0:
+		window_characters.append(np.int32([0] * (window_character * 2 + 1)))
+		word_embeddings.append(np.float32([0] * word_embedding_size))
+		sentence_embeddings.append(np.array(\
+			[np.float32([0] * word_embedding_size)] * (window_sentence * 2 + 1)))
+		labels.append(np.float32([0, 0, 1, 0]))
 
 	return (window_characters, word_embeddings, sentence_embeddings, labels)
 
@@ -289,61 +312,68 @@ def flat_map_f(a, b):
 
 def get_dataset(dpath, sess):
 
-	to_lower = create_lower_mapping()
 	input_files = tf.gfile.ListDirectory(dpath)
 	for i in range(len(input_files)):
 		input_files[i] = dpath + input_files[i]
 
 	# correct diac
 	dataset = tf.data.TextLineDataset(input_files)
-	dataset = dataset.filter(lambda x:
-	 (tf.py_func(filter_null_strings, [x], tf.bool, stateful=False))[0])
+	dataset = dataset.shuffle(buffer_size_shuffle)
 
-	for m in to_lower:
-		dataset = dataset.map(lambda x: 
-			tf.regex_replace(x, tf.constant(m), tf.constant(to_lower[m])), num_parallel_calls=CPUS)
-	dataset = dataset.map(lambda x: (x, x), num_parallel_calls=CPUS)
+	# dataset = dataset.filter(lambda x:
+	#  (tf.py_func(filter_null_strings, [x], tf.bool, stateful=False))[0])
 
-	for m in correct_diac:
-		dataset = dataset.map(lambda x, y:
-			(tf.regex_replace(x, tf.constant(m), tf.constant(correct_diac[m])),
-			tf.regex_replace(y, tf.constant(m), tf.constant(correct_diac[m])),), num_parallel_calls=CPUS)
+	# for m, replace in to_lower.items():
+	# 	dataset = dataset.map(lambda x: 
+	# 		tf.regex_replace(x, m, replace), num_parallel_calls=CPUS)
+	#dataset = dataset.map(lambda x: (x, x), num_parallel_calls=CPUS)
+
+	# for m in correct_diac:
+	# 	dataset = dataset.map(lambda x, y:
+	# 		(tf.regex_replace(x, m, correct_diac[m]),
+	# 		tf.regex_replace(y, m, correct_diac[m]),), num_parallel_calls=CPUS)
 		
-	for m in maps_no_diac:
-	 	dataset = dataset.map(lambda x, y: 
-			(tf.regex_replace(x, tf.constant(m), tf.constant(maps_no_diac[m])), y), num_parallel_calls=CPUS)
+	# for m in maps_no_diac:
+	#  	dataset = dataset.map(lambda x, y: 
+	# 		(tf.regex_replace(x, m, maps_no_diac[m]), y), num_parallel_calls=CPUS)
 
-	dataset = dataset.map(lambda x, y: 
-		tf.py_func(create_examples, (x, y), (tf.int32, tf.float32, tf.float32, tf.float32), stateful=False), num_parallel_calls=CPUS)
+	dataset = dataset.map(lambda x: 
+		tf.py_func(create_examples, (x,), (tf.int32, tf.float32, tf.float32, tf.float32), stateful=False), num_parallel_calls=CPUS)
 
 	dataset = dataset.map(lambda x1, x2, x3, y: ((x1, x2, x3), y), num_parallel_calls=CPUS)
 	dataset = dataset.flat_map(flat_map_f)
 	
-	filter_chars = lambda x, y: \
-		tf.logical_or( tf.logical_or(tf.equal(x[0][window_character + 1], ord('a')), \
-								tf.equal(x[0][window_character + 1], ord('i'))), \
-								tf.logical_or(tf.equal(x[0][window_character + 1], ord('t')), \
-								tf.equal(x[0][window_character + 1], ord('s'))))
+	# filter_chars = lambda x, y: \
+	# 	tf.logical_or( tf.logical_or(tf.equal(x[0][window_character + 1], ord('a')), \
+	# 							tf.equal(x[0][window_character + 1], ord('i'))), \
+	# 							tf.logical_or(tf.equal(x[0][window_character + 1], ord('t')), \
+	# 							tf.equal(x[0][window_character + 1], ord('s'))))
 	
-	dataset = dataset.filter(filter_chars)
-	dataset = dataset.shuffle(buffer_size_shuffle)
+	# dataset = dataset.filter(filter_chars)
+	
 	dataset = dataset.batch(batch_size)
+	dataset = dataset.prefetch(batch_size)
 
 	return dataset
 
 with tf.Session() as sess:
-
+	create_lower_mapping()
 	dt_train = get_dataset(train_files, sess)
 	dt_valid = get_dataset(valid_files, sess)
 	dt_test = get_dataset(test_files, sess)
 
-	inp_batches_train = 380968863 // batch_size
-	inp_batches_test = 131424533 // batch_size
-	inp_batches_valid = 131861863 // batch_size
+	# inp_batches_train = 380968863 // batch_size
+	# inp_batches_test = 131424533 // batch_size
+	# inp_batches_valid = 131861863 // batch_size
 
 	# inp_batches_train = 10650 // batch_size
 	# inp_batches_test = 3978 // batch_size
 	# inp_batches_valid = 50490 // batch_size
+
+	inp_batches_train = 1650 // batch_size
+	inp_batches_test = 3978 // batch_size
+	inp_batches_valid = 1490 // batch_size
+
 
 	vocabulary_size = max_unicode_allowed + 1
 
