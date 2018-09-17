@@ -41,7 +41,6 @@ model_embeddings = FastTextWrapper.load_fasttext_format("fastText/wiki.ro")
 train_files = "corpus/train/"
 test_files = "corpus/test/"
 valid_files = "corpus/validation/"
-fast_text_embeddings_file = "fastText/wiki.ro.vec"
 
 maps_no_diac = {
 	'ă': 'a',
@@ -76,30 +75,6 @@ def create_lower_mapping():
 	to_lower['Î'] = 'î'
 	return to_lower
 
-def get_clean_token(original_token):
-	s = ""
-	for c in original_token:
-		if c in maps_no_diac:
-			s += maps_no_diac[c]
-		else:
-			s += c
-	return s
-
-def check_similarity(clean_tokens, original_tokens):
-
-	n = len(clean_tokens)
-
-	for i in range(n):
-		if len(clean_tokens[i]) != len(original_tokens[i]):
-			return False
-
-		for j in range(len(clean_tokens[i])):
-			clean_token = get_clean_token(original_tokens[i][j])
-			if clean_token != clean_tokens[i][j]:
-				print(clean_token, clean_tokens[i][j])
-				return False
-	return True
-			
 def get_label(i, clean_text_utf, original_text_utf):
 
 	case = 2
@@ -246,7 +221,7 @@ def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, inde
 	#return np.int32(np.array([0])), np.int32(np.array([0, 0])),  np.int32(np.array([0, 0, 0]))
 
 def replace_char(c):
-        if ord(c) > 255:
+	if ord(c) > 255:
 		return chr(replace_character)
 	elif c in substitute_chars:
 		return substitute_chars[c]
@@ -256,7 +231,6 @@ def replace_char(c):
 def create_examples(clean_text, original_text):
 	clean_text_utf = clean_text.decode('utf-8')
 	# replace some strange characters which are modified by tokenization
-	substitute = {'"': '`'}
 	clean_text_utf_replaced = ""
 	clean_text_utf_replaced = [replace_char(c) for c in clean_text_utf]
 
