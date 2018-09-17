@@ -18,8 +18,8 @@ window_character = 6 # 2 * x + 1
 character_embedding_size = 20
 word_embedding_size = 300
 
-epochs = 15
-reset_iterators_every_epochs = 5
+epochs = 20
+reset_iterators_every_epochs = 10
 characters_cell_size = 64
 sentence_cell_size = 300
 neurons_dense_layer_after_merge = 512
@@ -63,6 +63,8 @@ correct_diac = {
 	"Ţ": "Ț",
 }
 
+substitute_chars = {'"': '`'}
+        
 def create_lower_mapping():
 	to_lower = { }
 	for c in  string.ascii_uppercase:
@@ -243,16 +245,20 @@ def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, inde
 	return (np.int32(w), token_embedding, sentence_embedding)
 	#return np.int32(np.array([0])), np.int32(np.array([0, 0])),  np.int32(np.array([0, 0, 0]))
 
+def replace_char(c):
+        if ord(c) > 255:
+		return chr(replace_character)
+	elif c in substitute_chars:
+		return substitute_chars[c]
+	else:
+		return c
+
 def create_examples(clean_text, original_text):
 	clean_text_utf = clean_text.decode('utf-8')
 	# replace some strange characters which are modified by tokenization
 	substitute = {'"': '`'}
 	clean_text_utf_replaced = ""
-	for c in clean_text_utf:
-		if ord(c) > 255:
-			clean_text_utf_replaced += chr(replace_character)
-		else:
-			clean_text_utf_replaced += substitute[c] if c in substitute else c
+	clean_text_utf_replaced = [replace_char(c) for c in clean_text_utf]
 
 	clean_text_utf = clean_text_utf_replaced
 	original_text_utf = original_text.decode('utf-8')
@@ -414,6 +420,7 @@ with tf.Session() as sess:
 	#train_char_window, train_words, train_sentence = train_inp
 	#valid_char_window, valid_words, valid_sentence = valid_inp
 	test_char_window, test_words, test_sentence = test_inp
+	print("char, word, sentence - char cell: {}, word cell: {}, hidden: {}".format(characters_cell_size, sentence_cell_size, neurons_dense_layer_after_merge))
 
 	for i in range(epochs):
 		if i % reset_iterators_every_epochs == 0:
