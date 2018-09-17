@@ -7,8 +7,10 @@ import string
 from tensorflow import keras
 import nltk
 from gensim.models.wrappers import FastText as FastTextWrapper
+import threading
 
-#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+dict_lock = threading.Lock()
+dict_avg_words = {}
 
 window_sentence = 15 
 window_character = 6 # 2 * x + 1
@@ -23,8 +25,9 @@ sentence_cell_size = 300
 neurons_dense_layer_after_merge = 512
 classes = 4
 batch_size = 256
+limit_backtracking_characters = 10
 
-CPUS = 16
+CPUS = 4
 buffer_size_shuffle = 10000
 max_unicode_allowed = 770
 replace_character = 255
@@ -32,12 +35,12 @@ padding_character = 0
 
 model_embeddings = FastTextWrapper.load_fasttext_format("fastText/wiki.ro")
 
-# train_files = "small_train/"
-# valid_files = "small_valid/"
-# test_files = "small_test/"
-train_files = "corpus/train/"
-test_files = "corpus/test/"
-valid_files = "corpus/validation/"
+train_files = "small_train/"
+valid_files = "small_valid/"
+test_files = "small_test/"
+# train_files = "corpus/train/"
+# test_files = "corpus/test/"
+# valid_files = "corpus/validation/"
 fast_text_embeddings_file = "fastText/wiki.ro.vec"
 
 maps_no_diac = {
@@ -128,7 +131,10 @@ def get_label(i, clean_text_utf, original_text_utf):
 def bkt_all_words(index, clean_word, current_word, maps_char_to_possible_chars):
 
 	if index == len(clean_word):
-		return [current_word]
+		if current_word in model_embeddings.wv.vocab:
+			return [current_word]
+		else:
+			return []
 	else:
 		L = []
 		c = clean_word[index]
@@ -143,15 +149,27 @@ def bkt_all_words(index, clean_word, current_word, maps_char_to_possible_chars):
 
 def get_avg_possible_word(clean_word):
 
+	with dict_lock:
+		if clean_word in dict_avg_words:
+			return dict_avg_words[clean_word]
+		
 	maps_char_to_possible_chars= {'a': ['ă', 'â', 'a'], 'i': ['î', 'i'],\
 					 's': ['ș', 's'], 't': ['ț', 't']}
+
+	count_diacritics_chars = 0
+	for c in clean_word:
+		if c in maps_char_to_possible_chars:
+			count_diacritics_chars += 1
+	
+	if count_diacritics_chars > limit_backtracking_characters:
+		return np.float32(model_embeddings.wv[clean_word])
+
 	all_words = bkt_all_words(0, clean_word, "", maps_char_to_possible_chars)
 	dict_words = []
 
 	for word in all_words:
-		if word in model_embeddings.wv.vocab:
 		#dict_words.append(np.random.rand(word_embedding_size))
-			dict_words.append(np.float32(model_embeddings.wv[word]))
+		dict_words.append(np.float32(model_embeddings.wv[word]))
 
 	if len(dict_words) > 0:
 		possible_words = len(dict_words)
@@ -218,6 +236,9 @@ def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, inde
 		w.append(v1)
 
 	token_embedding = get_avg_possible_word(clean_tokens[index_sent][index_token])
+	with dict_lock:
+		dict_avg_words[dict_lock] = token_embedding
+
 	sentence_embedding = get_embeddings_sentence(clean_tokens[index_sent], index_token)
 	return (np.int32(w), token_embedding, sentence_embedding)
 	#return np.int32(np.array([0])), np.int32(np.array([0, 0])),  np.int32(np.array([0, 0, 0]))
@@ -336,13 +357,13 @@ with tf.Session() as sess:
 	dt_valid = get_dataset(valid_files, sess)
 	dt_test = get_dataset(test_files, sess)
 
-	inp_batches_train = 380968863 // batch_size
-	inp_batches_test = 131424533 // batch_size
-	inp_batches_valid = 131861863 // batch_size
+	# inp_batches_train = 380968863 // batch_size
+	# inp_batches_test = 131424533 // batch_size
+	# inp_batches_valid = 131861863 // batch_size
 
-	# inp_batches_train = 10650 // batch_size
-	# inp_batches_test = 3978 // batch_size
-	# inp_batches_valid = 50490 // batch_size
+	inp_batches_train = 10650 // batch_size
+	inp_batches_test = 3978 // batch_size
+	inp_batches_valid = 50490 // batch_size
 
 	vocabulary_size = max_unicode_allowed + 1
 
