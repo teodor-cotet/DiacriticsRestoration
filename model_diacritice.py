@@ -352,7 +352,7 @@ def get_dataset(dpath, sess):
 	# dataset = dataset.filter(filter_chars)
 	dataset = dataset.shuffle(buffer_size_shuffle)
 	dataset = dataset.batch(batch_size)
-	dataset = dataset.prefetch(batch_size)
+	dataset = dataset.prefetch(100)
 
 	return dataset
 
