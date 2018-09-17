@@ -32,7 +32,7 @@ batch_size = 256
 limit_backtracking_characters = 10
 
 CPUS = 16
-buffer_size_shuffle = 10000
+buffer_size_shuffle = 500000
 max_unicode_allowed = 770
 replace_character = 255
 padding_character = 0
