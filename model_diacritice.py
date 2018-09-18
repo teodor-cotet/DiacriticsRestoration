@@ -36,7 +36,7 @@ batch_size = 256
 limit_backtracking_characters = 10
 
 CPUS = 16
-size_prefetch_buffer = 1
+size_prefetch_buffer = 10
 buffer_size_shuffle = 300000
 max_unicode_allowed = 770
 replace_character = 255
@@ -167,8 +167,6 @@ def get_avg_possible_word(clean_word):
 			return np.float32([0] * word_embedding_size)
 
 def get_embeddings_sentence(clean_tokens_sentence, index_token):
-	#if index_token == -1:
-	#	return np.float32(np.zeros((window_sentence, word_embedding_size)))
 	embeddings_sentence = []
 
 	for i in range(index_token - window_sentence, index_token + window_sentence + 1):
@@ -201,8 +199,8 @@ def discard_first_chars(index_text, clean_text_utf, clean_token):
 # return an tuple input (window_char, embedding_token, embedding_sentence)
 def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, \
 				index_last_sent, index_token):
-	global total_time_bkt
-	global total_time_sent
+	#global total_time_bkt
+	#global total_time_sent
 
 	# window with characters
 	w = []
@@ -216,22 +214,22 @@ def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, \
 		w.append(v1)
 	# token 
 	token = clean_tokens[index_sent][index_token]
-	start_bkt = time.time()
+	#start_bkt = time.time()
 	token_embedding = get_avg_possible_word(token)
-	end_bkt = time.time()
-	total_time_bkt = total_time + end_bkt - start_bkt
+	#end_bkt = time.time()
+	#total_time_bkt = total_time + end_bkt - start_bkt
 	with dict_lock:
 		dict_avg_words[token] = token_embedding
 
 	# sentence 
-	start_sen = time.time()
+	#start_sen = time.time()
 	# if is the same sentence don't recompute it
 	if index_last_sent is None or index_sent != index_last_sent:
 		sentence_embedding = get_embeddings_sentence(clean_tokens[index_sent], index_token)
 	else:
 		sentence_embedding = None
-	end_sen = time.time()
-	total_time_sent = total_time_sent + end_sen - start_sen
+	#end_sen = time.time()
+	#total_time_sent = total_time_sent + end_sen - start_sen
 
 	return (np.int32(w), token_embedding, sentence_embedding)
 	#return np.int32(np.array([0])), np.int32(np.array([0, 0])),  np.int32(np.array([0, 0, 0]))
@@ -255,15 +253,15 @@ def replace_char(c):
 		return c
 
 def create_examples(original_text):
-	global total_time_tokenization
-	global total_time
+	#global total_time_tokenization
+	#global total_time
 
-	start_all = time.time()
+	#start_all = time.time()
 
 	original_text_utf = original_text.decode('utf-8')
 	# replace some strange characters which are modified by tokenization
 	clean_text_utf = "".join([replace_char(c) for c in original_text_utf])
-	start = time.time()
+	#start = time.time()
 	clean_sentences = nltk.sent_tokenize(clean_text_utf)
 	clean_tokens = []
 
@@ -271,9 +269,9 @@ def create_examples(original_text):
 	for i in range(len(clean_sentences)):
 		clean_tokens_sent = nltk.word_tokenize(clean_sentences[i])
 		clean_tokens.append(clean_tokens_sent)
-	end = time.time()
+	#end = time.time()
 
-	total_time_tokenization = total_time_tokenization + end - start
+	#total_time_tokenization = total_time_tokenization + end - start
 
 	index_text = 0 # current position in text
 	index_sent = 0 # current sentence
@@ -326,8 +324,8 @@ def create_examples(original_text):
 			[np.float32([0] * word_embedding_size)] * (window_sentence * 2 + 1)))
 		labels.append(np.float32([0, 0, 1, 0]))
 
-	end = time.time()
-	total_time = total_time + end - start_all
+	#end = time.time()
+	#total_time = total_time + end - start_all
 
 	return (window_characters, word_embeddings, sentence_embeddings, labels)
 
