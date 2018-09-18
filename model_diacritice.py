@@ -171,14 +171,10 @@ def get_embeddings_sentence(clean_tokens_sentence, index_token):
 	#	return np.float32(np.zeros((window_sentence, word_embedding_size)))
 	embeddings_sentence = []
 
-	for i in range(-window_sentence, window_sentence + 1):
-		if index_token + i >= 0 and index_token + i < len(clean_tokens_sentence):
-			token = clean_tokens_sentence[index_token + i]
-			try:
-				embeddings_sentence.append(np.float32(model_embeddings.wv[token]))
-				#embeddings_sentence.append(np.float32([0] * word_embedding_size))
-			except:
-				embeddings_sentence.append(np.float32([0] * word_embedding_size))
+	for i in range(index_token - window_sentence, index_token + window_sentence + 1):
+		if i >= 0 and i < len(clean_tokens_sentence):
+			token = clean_tokens_sentence[i]
+			embeddings_sentence.append(get_avg_possible_word(token))
 		else:
 			embeddings_sentence.append(np.float32([0] * word_embedding_size))
 	return np.array(embeddings_sentence)
@@ -210,13 +206,13 @@ def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, \
 
 	# window with characters
 	w = []
-	for j in range(-window_character, window_character + 1):
-		if index_text + j < 0 or index_text + j >= len(clean_text_utf):
+	for j in range(index_text - window_character, index_text + window_character + 1):
+		if j < 0 or j >= len(clean_text_utf):
 			v1 = padding_character
-		elif ord(clean_text_utf[index_text + j]) > max_unicode_allowed:
+		elif ord(clean_text_utf[j]) > max_unicode_allowed:
 			v1 = replace_character
 		else:
-			v1 = ord(clean_text_utf[index_text + j])
+			v1 = ord(clean_text_utf[j])
 		w.append(v1)
 	# token 
 	token = clean_tokens[index_sent][index_token]
