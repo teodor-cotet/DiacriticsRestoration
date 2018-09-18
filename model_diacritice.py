@@ -5,17 +5,20 @@ import unidecode
 import re
 import string
 from tensorflow import keras
-from tensorflow import profiler
-from tensorflow.python.client import timeline
 from typing import List
+import time
 
 import nltk
 from gensim.models.wrappers import FastText as FastTextWrapper
 import threading
-import cProfile
 
 dict_lock = threading.Lock()
 dict_avg_words = {}
+
+total_time_tokenization = 0
+total_time = 0
+total_time_bkt = 0
+total_time_sent = 0
 
 window_sentence = 15 
 window_character = 6 # 2 * x + 1
@@ -33,7 +36,8 @@ batch_size = 256
 limit_backtracking_characters = 10
 
 CPUS = 16
-buffer_size_shuffle = 500000
+size_prefetch_buffer = 1
+buffer_size_shuffle = 300000
 max_unicode_allowed = 770
 replace_character = 255
 padding_character = 0
@@ -47,7 +51,7 @@ train_files = "corpus/train/"
 test_files = "corpus/test/"
 valid_files = "corpus/validation/"
 
-maps_no_diac = {
+map_no_diac = {
 	'ă': 'a',
 	'â': 'a',
 	'Â': 'A',
@@ -59,26 +63,22 @@ maps_no_diac = {
 	'î': 'i',
 	'Î': 'I'
 }
-
-correct_diac = {
+map_correct_diac = {
 	"ş": "ș",
 	"Ş": "Ș",
 	"ţ": "ț",
 	"Ţ": "Ț",
 }
-
-maps_char_to_possible_chars= {
+map_char_to_possible_chars = {
 	'a': ['ă', 'â', 'a'], 
 	'i': ['î', 'i'],
 	's': ['ș', 's'], 
 	't': ['ț', 't']
 }
-
-
-characters_in_interes = {'a', 'i', 's', 't'}
+map_substitute_chars = {'"': '`'}
+characters_in_interest = {'a', 'i', 's', 't'}
 to_lower = {}
 
-substitute_chars = {'"': '`'}
         
 def create_lower_mapping():
 	for c in  string.ascii_uppercase:
@@ -130,12 +130,12 @@ def bkt_all_words(index: int, clean_word: str, current_word: List) -> List:
 	else:
 		L = []
 		c = clean_word[index]
-		if c in maps_char_to_possible_chars:
-			for ch in maps_char_to_possible_chars[c]:
-				current_word[i] = ch
+		if c in map_char_to_possible_chars:
+			for ch in map_char_to_possible_chars[c]:
+				current_word[index] = ch
 				L += bkt_all_words(index + 1, clean_word, current_word)
 		else:
-			current_word[i] = c
+			current_word[index] = c
 			L += bkt_all_words(index + 1, clean_word, current_word)
 		return L
 
@@ -147,17 +147,18 @@ def get_avg_possible_word(clean_word):
 		
 	count_diacritics_chars = 0
 	for c in clean_word:
-		if c in maps_char_to_possible_chars:
+		if c in map_char_to_possible_chars:
 			count_diacritics_chars += 1
 	
 	if count_diacritics_chars > limit_backtracking_characters:
 		return np.float32(model_embeddings.wv[clean_word])
 		#return np.float32([0] * word_embedding_size)
 
-	all_words = bkt_all_words(0, clean_word, ['a' * len(clean_word)])
+	all_words = bkt_all_words(0, clean_word, ['a'] * len(clean_word))
 	
 	if len(all_words) > 0:
 		return np.mean([np.float32(model_embeddings.wv[word]) for word in all_words], axis=0)
+		#return np.float32([0] * word_embedding_size)
 	else:
 		try:
 			return np.float32(model_embeddings.wv[clean_word]) 
@@ -202,10 +203,13 @@ def discard_first_chars(index_text, clean_text_utf, clean_token):
 	return index_text - cnt_chars_token
 
 # return an tuple input (window_char, embedding_token, embedding_sentence)
-def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, index_token):
-	
-	w = [] # window with characters
-	# create window of characters
+def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, \
+				index_last_sent, index_token):
+	global total_time_bkt
+	global total_time_sent
+
+	# window with characters
+	w = []
 	for j in range(-window_character, window_character + 1):
 		if index_text + j < 0 or index_text + j >= len(clean_text_utf):
 			v1 = padding_character
@@ -214,38 +218,56 @@ def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, inde
 		else:
 			v1 = ord(clean_text_utf[index_text + j])
 		w.append(v1)
+	# token 
 	token = clean_tokens[index_sent][index_token]
+	start_bkt = time.time()
 	token_embedding = get_avg_possible_word(token)
+	end_bkt = time.time()
+	total_time_bkt = total_time + end_bkt - start_bkt
 	with dict_lock:
 		dict_avg_words[token] = token_embedding
 
-	sentence_embedding = get_embeddings_sentence(clean_tokens[index_sent], index_token)
+	# sentence 
+	start_sen = time.time()
+	# if is the same sentence don't recompute it
+	if index_last_sent is None or index_sent != index_last_sent:
+		sentence_embedding = get_embeddings_sentence(clean_tokens[index_sent], index_token)
+	else:
+		sentence_embedding = None
+	end_sen = time.time()
+	total_time_sent = total_time_sent + end_sen - start_sen
+
 	return (np.int32(w), token_embedding, sentence_embedding)
 	#return np.int32(np.array([0])), np.int32(np.array([0, 0])),  np.int32(np.array([0, 0, 0]))
 
 def replace_char(c):
 
-	if c in correct_diac:
-		c = correct_diac[c]
+	if c in map_correct_diac:
+		c = map_correct_diac[c]
 
 	if c in to_lower:
 		c = to_lower[c]
 
-	if c in maps_no_diac:
-		c = maps_no_diac[c]
+	if c in map_no_diac:
+		c = map_no_diac[c]
 
 	if ord(c) > 255:
 		return chr(replace_character)
-	elif c in substitute_chars:
-		return substitute_chars[c]
+	elif c in map_substitute_chars:
+		return map_substitute_chars[c]
 	else:
 		return c
 
 def create_examples(original_text):
+	global total_time_tokenization
+	global total_time
+
+	start_all = time.time()
+
 	original_text_utf = original_text.decode('utf-8')
 	# replace some strange characters which are modified by tokenization
 	clean_text_utf = "".join([replace_char(c) for c in original_text_utf])
-
+	start = time.time()
 	clean_sentences = nltk.sent_tokenize(clean_text_utf)
 	clean_tokens = []
 
@@ -253,28 +275,40 @@ def create_examples(original_text):
 	for i in range(len(clean_sentences)):
 		clean_tokens_sent = nltk.word_tokenize(clean_sentences[i])
 		clean_tokens.append(clean_tokens_sent)
+	end = time.time()
+
+	total_time_tokenization = total_time_tokenization + end - start
 
 	index_text = 0 # current position in text
 	index_sent = 0 # current sentence
 	index_token = 0 # current token
+	index_last_sent = None # last sentence computed
+
+	# input and output lists
 	window_characters = []
 	word_embeddings = []
 	sentence_embeddings = []
 	labels = []
+
 	while index_sent < len(clean_tokens):
 		clean_token = clean_tokens[index_sent][index_token]
 #		index_text = discard_first_chars(index_text, clean_text_utf, clean_token)
 		i = 0		
 		while i < len(clean_token):
-			if clean_text_utf[index_text] in characters_in_interes:
+			if clean_text_utf[index_text] in characters_in_interest:
 
 				label = get_label(index_text, clean_text_utf, original_text_utf)
 				win_char, word_emb, sent_emb = get_input_example(clean_text_utf, \
-						index_text, clean_tokens, index_sent, index_token)
+						index_text, clean_tokens, index_sent, index_last_sent, index_token)
 
+				index_last_sent = index_sent
 				window_characters.append(win_char)
 				word_embeddings.append(word_emb)
-				sentence_embeddings.append(sent_emb)
+				# sentence already computed
+				if sent_emb is None:
+					sentence_embeddings.append(sentence_embeddings[-1])
+				else:
+					sentence_embeddings.append(sent_emb)					
 				labels.append(label)
 
 			if clean_text_utf[index_text] == clean_token[i]:
@@ -283,19 +317,21 @@ def create_examples(original_text):
 			else: # discard char in text
 				index_text += 1
 			
-
 		if index_token == len(clean_tokens[index_sent]) - 1:
 			index_token = 0
 			index_sent += 1
 		else:
 			index_token += 1
-
+	# dummy values for empty sentence
 	if len(window_characters) == 0:
 		window_characters.append(np.int32([0] * (window_character * 2 + 1)))
 		word_embeddings.append(np.float32([0] * word_embedding_size))
 		sentence_embeddings.append(np.array(\
 			[np.float32([0] * word_embedding_size)] * (window_sentence * 2 + 1)))
 		labels.append(np.float32([0, 0, 1, 0]))
+
+	end = time.time()
+	total_time = total_time + end - start_all
 
 	return (window_characters, word_embeddings, sentence_embeddings, labels)
 
@@ -313,26 +349,7 @@ def get_dataset(dpath, sess):
 	for i in range(len(input_files)):
 		input_files[i] = dpath + input_files[i]
 
-	# correct diac
 	dataset = tf.data.TextLineDataset(input_files)
-	
-
-	# dataset = dataset.filter(lambda x:
-	#  (tf.py_func(filter_null_strings, [x], tf.bool, stateful=False))[0])
-
-	# for m, replace in to_lower.items():
-	# 	dataset = dataset.map(lambda x: 
-	# 		tf.regex_replace(x, m, replace), num_parallel_calls=CPUS)
-	#dataset = dataset.map(lambda x: (x, x), num_parallel_calls=CPUS)
-
-	# for m in correct_diac:
-	# 	dataset = dataset.map(lambda x, y:
-	# 		(tf.regex_replace(x, m, correct_diac[m]),
-	# 		tf.regex_replace(y, m, correct_diac[m]),), num_parallel_calls=CPUS)
-		
-	# for m in maps_no_diac:
-	#  	dataset = dataset.map(lambda x, y: 
-	# 		(tf.regex_replace(x, m, maps_no_diac[m]), y), num_parallel_calls=CPUS)
 
 	dataset = dataset.map(lambda x: 
 		tf.py_func(create_examples, (x,), (tf.int32, tf.float32, tf.float32, tf.float32), stateful=False), num_parallel_calls=CPUS)
@@ -340,16 +357,9 @@ def get_dataset(dpath, sess):
 	dataset = dataset.map(lambda x1, x2, x3, y: ((x1, x2, x3), y), num_parallel_calls=CPUS)
 	dataset = dataset.flat_map(flat_map_f)
 	
-	# filter_chars = lambda x, y: \
-	# 	tf.logical_or( tf.logical_or(tf.equal(x[0][window_character + 1], ord('a')), \
-	# 							tf.equal(x[0][window_character + 1], ord('i'))), \
-	# 							tf.logical_or(tf.equal(x[0][window_character + 1], ord('t')), \
-	# 							tf.equal(x[0][window_character + 1], ord('s'))))
-	
-	# dataset = dataset.filter(filter_chars)
 	dataset = dataset.shuffle(buffer_size_shuffle)
 	dataset = dataset.batch(batch_size)
-	dataset = dataset.prefetch(100)
+	dataset = dataset.prefetch(size_prefetch_buffer)
 
 	return dataset
 
@@ -414,12 +424,8 @@ with tf.Session() as sess:
 	model.compile(optimizer='adam',\
 				  loss='categorical_crossentropy',\
 				  metrics=['accuracy', keras.metrics.categorical_accuracy])
-	#train_inp, train_out = iterator_train.get_next()
-	#valid_inp, valid_out = iterator_valid.get_next()
-	test_inp, test_out = iterator_test.get_next()
 
-	#train_char_window, train_words, train_sentence = train_inp
-	#valid_char_window, valid_words, valid_sentence = valid_inp
+	test_inp, test_out = iterator_test.get_next()
 	test_char_window, test_words, test_sentence = test_inp
 	print("char, word, sentence - char cell: {}, word cell: {}, hidden: {}".format(characters_cell_size, sentence_cell_size, neurons_dense_layer_after_merge))
 
@@ -432,12 +438,12 @@ with tf.Session() as sess:
 			sess.run(iterator_train.initializer)
 			train_inp, train_out = iterator_train.get_next()
 			train_char_window, train_words, train_sentence = train_inp
-			
+
 		model.fit(\
 			 [train_char_window, train_words, train_sentence],\
 			 [train_out],\
-			 steps_per_epoch=inp_batches_train//reset_iterators_every_epochs,
-			 epochs=1, 
+			 steps_per_epoch=inp_batches_train//reset_iterators_every_epochs,\
+			 epochs=1,\
 			 verbose=1)
 		
 		[valid_loss, valid_acc, valid_cross_entropy] = model.evaluate([valid_char_window, valid_words, valid_sentence],\
@@ -445,6 +451,9 @@ with tf.Session() as sess:
 									verbose=1,\
 									steps=inp_batches_valid//reset_iterators_every_epochs)
 		print("validation - loss: " + str(valid_loss) +  " acc: " + str(valid_acc))
+	print("total time: " + str(total_time))
+	print("tokenization time: " + str(total_time_tokenization))
+	print("sentence time: " + str(total_time_sent))
 
 	# [test_loss, test_acc, test_cross_entropy] = model.evaluate(\
 	# 								[test_char_window, test_words, test_sentence],\
