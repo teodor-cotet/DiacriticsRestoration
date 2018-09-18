@@ -7,6 +7,7 @@ import string
 from tensorflow import keras
 from tensorflow import profiler
 from tensorflow.python.client import timeline
+from typing import List
 
 import nltk
 from gensim.models.wrappers import FastText as FastTextWrapper
@@ -66,6 +67,14 @@ correct_diac = {
 	"Ţ": "Ț",
 }
 
+maps_char_to_possible_chars= {
+	'a': ['ă', 'â', 'a'], 
+	'i': ['î', 'i'],
+	's': ['ș', 's'], 
+	't': ['ț', 't']
+}
+
+
 characters_in_interes = {'a', 'i', 's', 't'}
 to_lower = {}
 
@@ -110,11 +119,12 @@ def get_label(i, clean_text_utf, original_text_utf):
 	label[case] = np.float32(1.0)
 	return label
 
-def bkt_all_words(index, clean_word, current_word, maps_char_to_possible_chars):
+def bkt_all_words(index: int, clean_word: str, current_word: List) -> List:
 
 	if index == len(clean_word):
-		if current_word in model_embeddings.wv.vocab:
-			return [current_word]
+		word = "".join(current_word)
+		if word in model_embeddings.wv.vocab:
+			return [word]
 		else:
 			return []
 	else:
@@ -122,11 +132,11 @@ def bkt_all_words(index, clean_word, current_word, maps_char_to_possible_chars):
 		c = clean_word[index]
 		if c in maps_char_to_possible_chars:
 			for ch in maps_char_to_possible_chars[c]:
-				L += bkt_all_words(index + 1, clean_word, \
-					current_word + ch, maps_char_to_possible_chars)
+				current_word[i] = ch
+				L += bkt_all_words(index + 1, clean_word, current_word)
 		else:
-			L += bkt_all_words(index + 1, clean_word, \
-				current_word + c, maps_char_to_possible_chars)
+			current_word[i] = c
+			L += bkt_all_words(index + 1, clean_word, current_word)
 		return L
 
 def get_avg_possible_word(clean_word):
@@ -135,9 +145,6 @@ def get_avg_possible_word(clean_word):
 		if clean_word in dict_avg_words:
 			return dict_avg_words[clean_word]
 		
-	maps_char_to_possible_chars= {'a': ['ă', 'â', 'a'], 'i': ['î', 'i'],\
-					 's': ['ș', 's'], 't': ['ț', 't']}
-
 	count_diacritics_chars = 0
 	for c in clean_word:
 		if c in maps_char_to_possible_chars:
@@ -147,20 +154,10 @@ def get_avg_possible_word(clean_word):
 		return np.float32(model_embeddings.wv[clean_word])
 		#return np.float32([0] * word_embedding_size)
 
-	all_words = bkt_all_words(0, clean_word, "", maps_char_to_possible_chars)
-	dict_words = []
-
-	for word in all_words:
-		#dict_words.append(np.random.rand(word_embedding_size))
-		dict_words.append(np.float32(model_embeddings.wv[word]))
-
-	if len(dict_words) > 0:
-		possible_words = len(dict_words)
-		final_embedding = np.float32(np.array([0] * word_embedding_size))
-		for w_emb in dict_words:
-			final_embedding += np.array(w_emb)
-		final_embedding /= possible_words
-		return final_embedding
+	all_words = bkt_all_words(0, clean_word, ['a' * len(clean_word)])
+	
+	if len(all_words) > 0:
+		return np.mean([np.float32(model_embeddings.wv[word]) for word in all_words], axis=0)
 	else:
 		try:
 			return np.float32(model_embeddings.wv[clean_word]) 
@@ -217,10 +214,10 @@ def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, inde
 		else:
 			v1 = ord(clean_text_utf[index_text + j])
 		w.append(v1)
-
-	token_embedding = get_avg_possible_word(clean_tokens[index_sent][index_token])
+	token = clean_tokens[index_sent][index_token]
+	token_embedding = get_avg_possible_word(token)
 	with dict_lock:
-		dict_avg_words[dict_lock] = token_embedding
+		dict_avg_words[token] = token_embedding
 
 	sentence_embedding = get_embeddings_sentence(clean_tokens[index_sent], index_token)
 	return (np.int32(w), token_embedding, sentence_embedding)
