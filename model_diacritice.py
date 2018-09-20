@@ -1,24 +1,27 @@
 import tensorflow as tf
 import numpy as np
-import os
+from tensorflow import keras
+import nltk
+from gensim.models.wrappers import FastText as FastTextWrapper
+
 import unidecode
 import re
 import string
-from tensorflow import keras
-from typing import List
 import time
+from typing import List
 
-import nltk
-from gensim.models.wrappers import FastText as FastTextWrapper
+import argparse
+import os
 import threading
+
+args = None
+model_embeddings = None
 
 dict_lock = threading.Lock()
 dict_avg_words = {}
 
-total_time_tokenization = 0
-total_time = 0
-total_time_bkt = 0
-total_time_sent = 0
+# the weights of the model will be saved in a folder per each epoch
+folder_saved_models = "saved_models/"
 
 window_sentence = 15 
 window_character = 6 # 2 * x + 1
@@ -26,8 +29,7 @@ window_character = 6 # 2 * x + 1
 character_embedding_size = 20
 word_embedding_size = 300
 
-epochs = 20
-reset_iterators_every_epochs = 10
+
 characters_cell_size = 64
 sentence_cell_size = 300
 neurons_dense_layer_after_merge = 512
@@ -37,19 +39,22 @@ limit_backtracking_characters = 10
 
 CPUS = 16
 size_prefetch_buffer = 10
-buffer_size_shuffle = 300000
 max_unicode_allowed = 770
 replace_character = 255
 padding_character = 0
 
-model_embeddings = FastTextWrapper.load_fasttext_format("fastText/wiki.ro")
-
-# train_files = "small_train/"
-# valid_files = "small_valid/"
-# test_files = "small_test/"
 train_files = "corpus/train/"
 test_files = "corpus/test/"
 valid_files = "corpus/validation/"
+
+samples_number = {
+	'full_train': 380968863,
+	'full_test': 131424533,
+	'full_valid': 131861863,
+	'par_train': 84321880,
+	'par_test': 29407143,
+	'par_valid': 28882058,
+}
 
 map_no_diac = {
 	'ă': 'a',
@@ -79,7 +84,14 @@ map_substitute_chars = {'"': '`'}
 characters_in_interest = {'a', 'i', 's', 't'}
 to_lower = {}
 
-        
+# get case of the highest probability (returned by softmax)
+def get_case(p):
+	case = 0
+	for i in range(len(p)):
+		if p[i] > p[case]:
+			case = i
+	return case
+
 def create_lower_mapping():
 	for c in  string.ascii_uppercase:
 		to_lower[c] = c.lower()
@@ -89,6 +101,11 @@ def create_lower_mapping():
 	to_lower['Ț'] = 'ț'
 	to_lower['Î'] = 'î'
 
+# case:
+#	0 -> ă
+#	1 -> â, î
+#	2 -> unmodified
+# 	3 -> ș, ț
 def get_label(i, clean_text_utf, original_text_utf):
 
 	case = 2
@@ -123,10 +140,13 @@ def bkt_all_words(index: int, clean_word: str, current_word: List) -> List:
 
 	if index == len(clean_word):
 		word = "".join(current_word)
-		if word in model_embeddings.wv.vocab:
+		if args.use_dummy_word_embeddings == True:
 			return [word]
 		else:
-			return []
+			if word in model_embeddings.wv.vocab:
+				return [word]
+			else:
+				return []
 	else:
 		L = []
 		c = clean_word[index]
@@ -151,18 +171,24 @@ def get_avg_possible_word(clean_word):
 			count_diacritics_chars += 1
 	
 	if count_diacritics_chars > limit_backtracking_characters:
-		return np.float32(model_embeddings.wv[clean_word])
-		#return np.float32([0] * word_embedding_size)
+		if args.use_dummy_word_embeddings == False:
+			return np.float32(model_embeddings.wv[clean_word])
+		else:
+			return np.float32([0] * word_embedding_size)
 
 	all_words = bkt_all_words(0, clean_word, ['a'] * len(clean_word))
 	
 	if len(all_words) > 0:
-		return np.mean([np.float32(model_embeddings.wv[word]) for word in all_words], axis=0)
-		#return np.float32([0] * word_embedding_size)
+		if args.use_dummy_word_embeddings == False:
+			return np.mean([np.float32(model_embeddings.wv[word]) for word in all_words], axis=0)
+		else:
+			return np.float32([0] * word_embedding_size)
 	else:
 		try:
-			return np.float32(model_embeddings.wv[clean_word]) 
-			#return np.float32([0] * word_embedding_size)
+			if args.use_dummy_word_embeddings == False:
+				return np.float32(model_embeddings.wv[clean_word])
+			else:
+				return np.float32([0] * word_embedding_size)
 		except:
 			return np.float32([0] * word_embedding_size)
 
@@ -177,24 +203,6 @@ def get_embeddings_sentence(clean_tokens_sentence, index_token):
 			embeddings_sentence.append(np.float32([0] * word_embedding_size))
 	return np.array(embeddings_sentence)
 	#return np.array(embeddings_sentence)
-
-# discard first chars that are not included in the tokenization
-# in order to not associate wrong tokens for these chars
-def discard_first_chars(index_text, clean_text_utf, clean_token):
-
-	cnt_chars_token = 0
-	char_token = clean_token[0]
-	# discard chars which are not the same in text
-	while index_text < len(clean_text_utf) and clean_text_utf[index_text] != char_token:
-		index_text += 1
-	# count chars which are the same in text
-	while index_text < len(clean_text_utf) and clean_text_utf[index_text] == char_token:
-		index_text += 1
-	# count chars which are the same in token
-	while cnt_chars_token < len(clean_token) and clean_token[cnt_chars_token] == char_token:
-		cnt_chars_token += 1
-	
-	return index_text - cnt_chars_token
 
 # return an tuple input (window_char, embedding_token, embedding_sentence)
 def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, \
@@ -252,7 +260,15 @@ def replace_char(c):
 	else:
 		return c
 
-def create_examples(original_text):
+def count_chars_in_interest(s):
+	cnt_chars = 0
+	for c in s:
+		character_c = chr(c)
+		if character_c in characters_in_interest:
+			cnt_chars += 1
+	return cnt_chars
+
+def create_examples(original_text, is_test_dataset):
 	#global total_time_tokenization
 	#global total_time
 
@@ -279,11 +295,11 @@ def create_examples(original_text):
 	index_last_sent = None # last sentence computed
 
 	# input and output lists
+	clean_words = []
 	window_characters = []
 	word_embeddings = []
 	sentence_embeddings = []
 	labels = []
-
 	while index_sent < len(clean_tokens):
 		clean_token = clean_tokens[index_sent][index_token]
 #		index_text = discard_first_chars(index_text, clean_text_utf, clean_token)
@@ -296,6 +312,8 @@ def create_examples(original_text):
 						index_text, clean_tokens, index_sent, index_last_sent, index_token)
 
 				index_last_sent = index_sent
+				if is_test_dataset == True:
+					clean_words.append(clean_token)
 				window_characters.append(win_char)
 				word_embeddings.append(word_emb)
 				# sentence already computed
@@ -326,8 +344,10 @@ def create_examples(original_text):
 
 	#end = time.time()
 	#total_time = total_time + end - start_all
-
-	return (window_characters, word_embeddings, sentence_embeddings, labels)
+	if is_test_dataset == False:
+		return (window_characters, word_embeddings, sentence_embeddings, labels)
+	else:
+		return (clean_words, window_characters, word_embeddings, sentence_embeddings, labels)
 
 def filter_null_strings(s):
 	if len(s) == 0:
@@ -337,53 +357,184 @@ def filter_null_strings(s):
 def flat_map_f(a, b):
 	return tf.data.Dataset.from_tensor_slices((a, b))
 
-def get_dataset(dpath, sess):
+def get_dataset(dpath, sess, is_test_dataset=False):
 
 	input_files = tf.gfile.ListDirectory(dpath)
+	
+	for i in range(len(input_files)):			
+		if args.corpus_rowiki == False and input_files[i].count('rowiki') > 0:
+			input_files.remove(input_files[i])
+			break
+	
 	for i in range(len(input_files)):
 		input_files[i] = dpath + input_files[i]
 
 	dataset = tf.data.TextLineDataset(input_files)
+	if is_test_dataset == True:
+		datatype_returned = (tf.string, tf.int32, tf.float32, tf.float32, tf.float32)
+	else:
+		datatype_returned = (tf.int32, tf.float32, tf.float32, tf.float32)
 
-	dataset = dataset.map(lambda x: 
-		tf.py_func(create_examples, (x,), (tf.int32, tf.float32, tf.float32, tf.float32), stateful=False), num_parallel_calls=CPUS)
-
-	dataset = dataset.map(lambda x1, x2, x3, y: ((x1, x2, x3), y), num_parallel_calls=CPUS)
+	dataset = dataset.map(lambda x:\
+		tf.py_func(create_examples,\
+					(x,is_test_dataset,),\
+					datatype_returned,\
+					stateful=False),\
+		num_parallel_calls=CPUS)
+	if is_test_dataset == True:
+		dataset = dataset.map(lambda x1, x2, x3, x4, y:\
+								((x1, x2, x3, x4), y),\
+								num_parallel_calls=CPUS)
+	else:
+		dataset = dataset.map(lambda x1, x2, x3, y:\
+								((x1, x2, x3), y),\
+								num_parallel_calls=CPUS)
 	dataset = dataset.flat_map(flat_map_f)
 	
-	dataset = dataset.shuffle(buffer_size_shuffle)
-	dataset = dataset.batch(batch_size)
+	# do not shuffle or batch test dataset
+	if is_test_dataset == True:
+		dataset = dataset.batch(1)
+	else:
+		dataset = dataset.shuffle(args.buffer_size_shuffle)
+		dataset = dataset.batch(batch_size)
+		
 	dataset = dataset.prefetch(size_prefetch_buffer)
 
 	return dataset
 
-with tf.Session() as sess:
-	create_lower_mapping()
-	dt_train = get_dataset(train_files, sess)
-	dt_valid = get_dataset(valid_files, sess)
-	dt_test = get_dataset(test_files, sess)
-
-	inp_batches_train = 380968863 // batch_size
-	inp_batches_test = 131424533 // batch_size
-	inp_batches_valid = 131861863 // batch_size
-
-	# inp_batches_train = 10650 // batch_size
-	# inp_batches_test = 3978 // batch_size
-	# inp_batches_valid = 50490 // batch_size
-
-	# inp_batches_train = 1650 // batch_size
-	# inp_batches_test = 3978 // batch_size
-	# inp_batches_valid = 1490 // batch_size
-
-
-	vocabulary_size = max_unicode_allowed + 1
-
-	iterator_train = dt_train.make_initializable_iterator()
-	iterator_valid = dt_valid.make_initializable_iterator()
+def compute_test_accuracy(sess, model):
+	dt_test = get_dataset(test_files, sess, True)
 	iterator_test = dt_test.make_initializable_iterator()
 
 	sess.run(iterator_test.initializer)
+	nr_test_batches = args.number_samples_test
 
+	test_inp_pred, test_out_pred = iterator_test.get_next()
+	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred = test_inp_pred
+
+	predictions = model.predict(x=[test_char_window_pred, test_words_pred, test_sentence_pred],\
+				  verbose=1,
+				  steps=nr_test_batches)
+
+	current_test_batch = 0
+	sess.run(iterator_test.initializer)
+	test_next_element = iterator_test.get_next()
+	prediction_index = -1
+	total_words = 0
+	correct_predicted_words = 0
+	correct_predicted_chars = 0
+
+	while True:
+		try:
+			test_inp, test_out = sess.run(test_next_element)
+			test_string_word, _, _, _ = test_inp
+			prediction_index += 1
+			current_test_batch += 1
+			nr_chars_in_word = count_chars_in_interest(test_string_word[0])
+			correct_prediction_word = True
+
+			for i in range(nr_chars_in_word):
+				pred_vector = predictions[prediction_index]
+				predicted_case = get_case(pred_vector)
+				correct_case = get_case(test_out[0])
+
+				if predicted_case != correct_case:
+					correct_prediction_word = False
+				else:
+					correct_predicted_chars += 1
+
+				if current_test_batch == nr_test_batches:
+					break
+
+				# not end of the word yet
+				if i < nr_chars_in_word - 1:
+					_, test_out = sess.run(test_next_element)
+					prediction_index += 1
+					current_test_batch += 1
+			
+			total_words += 1
+			if correct_prediction_word == True:
+				correct_predicted_words += 1
+				
+			if current_test_batch == nr_test_batches:
+				break
+
+		except tf.errors.OutOfRangeError:
+			break
+	(char_acc, word_acc) = (correct_predicted_chars / args.number_samples_test, correct_predicted_words / total_words)
+	print("char acc: " + str(char_acc) + " ,word accuracy: " + str(word_acc))
+	return char_acc, word_acc
+
+def set_up_folders_saved_models():
+	full_path_dir = folder_saved_models + args.folder_saved_model_per_epoch
+	if args.save_weights == True:
+		if os.path.exists(folder_saved_models) == False:
+			os.makedirs(full_path_dir)
+		elif os.path.exists(full_path_dir) == False:
+			os.makedirs(full_path_dir)
+
+def parse_args():
+	global args
+	parser = argparse.ArgumentParser(description='Run diacritics model')
+	parser.add_argument('-s', dest="save_weights", action='store_false', default=True,\
+						help="save the weights, default=true")
+	parser.add_argument('-f', dest="folder_saved_model_per_epoch",\
+						action='store', default="char_word_sentence",\
+						help="name of the folder to store the weights, default: char_word_sentence")
+	parser.add_argument('-c', dest="corpus_rowiki",\
+						action='store_true', default=False,\
+						help="if you want to use rowiki corpus, beside parliament corpus, default=false")
+	parser.add_argument('-test', dest="do_test",\
+						action='store_true', default=False,\
+						help="if you want to run test dataset, default=false")
+	parser.add_argument('-n_test', dest="number_samples_test",\
+						action='store', default=100000, type=int,\
+						help="number of samples for test accuracy, if -test is not set \
+						this does not have any effect, default=100000")
+	parser.add_argument('-e', dest="epochs",\
+						action='store', default=20, type=int,\
+						help="number of epochs, default=20")
+	parser.add_argument('-r', dest="reset_iterators_every_epochs",\
+						action='store', default=10, type=int,\
+						help="reset the iterators for the dataset every nr epochs, default=10")
+	parser.add_argument('-buff', dest="buffer_size_shuffle",\
+						action='store', default=100000, type=int,\
+						help="size of the buffer for shuffle, default=100000")
+	parser.add_argument('-fastt', dest="use_dummy_word_embeddings",\
+						action='store_true', default=False,\
+						help="use dummy word embeddings instead of fasttext, default=false")
+	parser.add_argument('-load', dest="load_model_name",\
+						action='store', default=None,\
+						help="load presaved model and weights\
+						, specify just the folder name, it will take the last epoch file,\
+						default=None")
+	parser.add_argument('-tv', dest="run_train_validation",\
+						action='store_false', default=True,\
+						help="run train and validation, if false you should set -load model param\
+						, default=True")
+
+	args = parser.parse_args()
+	args.folder_saved_model_per_epoch += '/'
+	if args.load_model_name is not None:
+		args.load_model_name += '/'
+	print(args)
+
+def get_number_samples():
+	global args
+	if args.corpus_rowiki == False:
+		inp_batches_train = samples_number['par_train'] // batch_size
+		inp_batches_test = samples_number['par_test'] // batch_size
+		inp_batches_valid = samples_number['par_valid'] // batch_size
+	else:
+		inp_batches_train = samples_number['full_train'] // batch_size
+		inp_batches_test = samples_number['full_test'] // batch_size
+		inp_batches_valid = samples_number['full_valid'] // batch_size
+	return inp_batches_train, inp_batches_test, inp_batches_valid
+
+# construct the model 
+def construct_model(sess):
+	
+	vocabulary_size = max_unicode_allowed + 1
 	# character window 
 	input_character_window = keras.layers.Input(shape=(window_character * 2 + 1,))
 	character_embeddings_layer = keras.layers.Embedding(\
@@ -406,7 +557,8 @@ with tf.Session() as sess:
 											input_shape=(window_sentence * 2 + 1, word_embedding_size,))	
 
 	sentence_bi_lstm_layer = keras.layers.Bidirectional(layer=sentence_lstm_layer,\
-                                                        merge_mode="concat")(sentence_embeddings_layer)
+														merge_mode="concat")(sentence_embeddings_layer)
+	# merged
 	merged_layer = keras.layers.concatenate([characters_bi_lstm_layer, \
 				word_embeddings_layer, sentence_bi_lstm_layer], axis=-1)
 
@@ -414,44 +566,82 @@ with tf.Session() as sess:
 	output = keras.layers.Dense(classes, activation='softmax')(dense_layer)
 
 	model = keras.models.Model(inputs=[input_character_window, word_embeddings_layer, sentence_embeddings_layer],\
-	 						   outputs=output)
+							outputs=output)
 	model.compile(optimizer='adam',\
-				  loss='categorical_crossentropy',\
-				  metrics=['accuracy', keras.metrics.categorical_accuracy])
+				loss='categorical_crossentropy',\
+				metrics=['accuracy'])
 
-	test_inp, test_out = iterator_test.get_next()
-	test_char_window, test_words, test_sentence = test_inp
-	print("char, word, sentence - char cell: {}, word cell: {}, hidden: {}".format(characters_cell_size, sentence_cell_size, neurons_dense_layer_after_merge))
-
-	for i in range(epochs):
-		if i % reset_iterators_every_epochs == 0:
-			sess.run(iterator_valid.initializer)
-			valid_inp, valid_out = iterator_valid.get_next()
-			valid_char_window, valid_words, valid_sentence = valid_inp
-
-			sess.run(iterator_train.initializer)
-			train_inp, train_out = iterator_train.get_next()
-			train_char_window, train_words, train_sentence = train_inp
-
-		model.fit(\
-			 [train_char_window, train_words, train_sentence],\
-			 [train_out],\
-			 steps_per_epoch=inp_batches_train//reset_iterators_every_epochs,\
-			 epochs=1,\
-			 verbose=1)
+	if args.load_model_name is not None:
 		
-		[valid_loss, valid_acc, valid_cross_entropy] = model.evaluate([valid_char_window, valid_words, valid_sentence],\
-									valid_out,\
-									verbose=1,\
-									steps=inp_batches_valid//reset_iterators_every_epochs)
-		print("validation - loss: " + str(valid_loss) +  " acc: " + str(valid_acc))
-	print("total time: " + str(total_time))
-	print("tokenization time: " + str(total_time_tokenization))
-	print("sentence time: " + str(total_time_sent))
+		folder_path_with_epochs = folder_saved_models + args.load_model_name 
+		epochs_files = os.listdir(folder_path_with_epochs)
+		sorted_epochs_files = sorted(epochs_files)
+		load_file = sorted_epochs_files[-1]
+		print('loading model ' + args.load_model_name + ' ' + load_file)
+		model.load_weights(folder_saved_models + args.load_model_name + load_file)
+	return model
 
-	# [test_loss, test_acc, test_cross_entropy] = model.evaluate(\
-	# 								[test_char_window, test_words, test_sentence],\
-	# 								test_out,\
-	# 								verbose=1,\
-	# 								steps=inp_batches_test)
-	# print("test - loss: " + str(test_loss) +  " acc: " + str(test_acc))
+if __name__ == "__main__":
+
+	create_lower_mapping()
+	parse_args()
+	inp_batches_train, inp_batches_test, inp_batches_valid = get_number_samples()
+	set_up_folders_saved_models()
+
+	if args.use_dummy_word_embeddings == False:
+		model_embeddings = FastTextWrapper.load_fasttext_format("fastText/wiki.ro")
+
+	with tf.Session() as sess:
+
+		if inp_batches_test < args.number_samples_test:
+			print("cannot start, too many test samples given, has to be lower than "\
+				 + str(inp_batches_test))
+
+		print("char, word, sentence - char cell:{}, word cell: {}, hidden: {}"\
+			.format(characters_cell_size, sentence_cell_size, neurons_dense_layer_after_merge))
+
+		dt_train = get_dataset(train_files, sess)
+		dt_valid = get_dataset(valid_files, sess)
+		iterator_train = dt_train.make_initializable_iterator()
+		iterator_valid = dt_valid.make_initializable_iterator()
+
+		model = construct_model(sess)
+		# run test and validation 
+		if args.run_train_validation == True:
+			for i in range(args.epochs):
+
+				print('epoch: ' + str(i + 1))
+				# reset iterators
+				if i % args.reset_iterators_every_epochs == 0:
+					print('resseting iterators')
+					sess.run(iterator_valid.initializer)
+					valid_inp, valid_out = iterator_valid.get_next()
+					valid_char_window, valid_words, valid_sentence = valid_inp
+
+					sess.run(iterator_train.initializer)
+					train_inp, train_out = iterator_train.get_next()
+					train_char_window, train_words, train_sentence = train_inp
+				
+				# train an epoch
+				model.fit(\
+					[train_char_window, train_words, train_sentence],\
+					[train_out],\
+					steps_per_epoch=inp_batches_train//args.reset_iterators_every_epochs,\
+					epochs=1,\
+					verbose=1)
+
+				# save weights
+				if args.save_weights == True:
+					print('saving weights')
+					full_path_epoch_weights = folder_saved_models + args.folder_saved_model_per_epoch +\
+							'epoch_' + str(i) + '.h5'
+					model.save_weights(full_path_epoch_weights)
+				# validate 
+				[valid_loss, valid_acc] = model.evaluate([valid_char_window, valid_words, valid_sentence],\
+											valid_out,\
+											verbose=1,\
+											steps=inp_batches_valid//args.reset_iterators_every_epochs)
+				print("validation - loss: " + str(valid_loss) +  " acc: " + str(valid_acc))
+		# test
+		if args.do_test:
+			compute_test_accuracy(sess, model)
