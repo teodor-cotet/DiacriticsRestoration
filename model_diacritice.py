@@ -512,6 +512,9 @@ def parse_args():
 						action='store_false', default=True,\
 						help="run train and validation, if false you should set -load model param\
 						, default=True")
+	parser.add_argument('-mgpu', dest="percent_memory_gpu",\
+						action='store', default=0.2, type=float,\
+						help="percentage of the gpu memory to use, default=0.2")
 
 	args = parser.parse_args()
 	args.folder_saved_model_per_epoch += '/'
@@ -590,8 +593,11 @@ if __name__ == "__main__":
 
 	if args.use_dummy_word_embeddings == False:
 		model_embeddings = FastTextWrapper.load_fasttext_format("fastText/wiki.ro")
+	
+	config = tf.ConfigProto()
+	config.gpu_options.per_process_gpu_memory_fraction = args.percent_memory_gpu
 
-	with tf.Session() as sess:
+	with tf.Session(config=config) as sess:
 
 		if inp_batches_test < args.number_samples_test:
 			print("cannot start, too many test samples given, has to be lower than "\
