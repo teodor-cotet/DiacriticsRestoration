@@ -107,7 +107,6 @@ def create_lower_mapping():
 #	2 -> unmodified
 # 	3 -> ș, ț
 def get_label(i, clean_text_utf, original_text_utf):
-
 	case = 2
 	if clean_text_utf[i] == 'a':
 		if original_text_utf[i] == 'ă':
@@ -260,6 +259,14 @@ def replace_char(c):
 	else:
 		return c
 
+def replace_char_original(c):
+	if c in map_correct_diac:
+		c = map_correct_diac[c]
+
+	if c in to_lower:
+		c = to_lower[c]
+	return c
+
 def count_chars_in_interest(s):
 	cnt_chars = 0
 	for c in s:
@@ -269,15 +276,11 @@ def count_chars_in_interest(s):
 	return cnt_chars
 
 def create_examples(original_text, is_test_dataset):
-	#global total_time_tokenization
-	#global total_time
-
-	#start_all = time.time()
 
 	original_text_utf = original_text.decode('utf-8')
+	original_text_utf = "".join([replace_char_original(c) for c in original_text_utf])
 	# replace some strange characters which are modified by tokenization
 	clean_text_utf = "".join([replace_char(c) for c in original_text_utf])
-	#start = time.time()
 	clean_sentences = nltk.sent_tokenize(clean_text_utf)
 	clean_tokens = []
 
@@ -285,9 +288,6 @@ def create_examples(original_text, is_test_dataset):
 	for i in range(len(clean_sentences)):
 		clean_tokens_sent = nltk.word_tokenize(clean_sentences[i])
 		clean_tokens.append(clean_tokens_sent)
-	#end = time.time()
-
-	#total_time_tokenization = total_time_tokenization + end - start
 
 	index_text = 0 # current position in text
 	index_sent = 0 # current sentence
@@ -302,12 +302,12 @@ def create_examples(original_text, is_test_dataset):
 	labels = []
 	while index_sent < len(clean_tokens):
 		clean_token = clean_tokens[index_sent][index_token]
-#		index_text = discard_first_chars(index_text, clean_text_utf, clean_token)
 		i = 0		
 		while i < len(clean_token):
 			if clean_text_utf[index_text] in characters_in_interest:
 
 				label = get_label(index_text, clean_text_utf, original_text_utf)
+				#print(original_text_utf[index_text], label)
 				win_char, word_emb, sent_emb = get_input_example(clean_text_utf, \
 						index_text, clean_tokens, index_sent, index_last_sent, index_token)
 
@@ -322,6 +322,7 @@ def create_examples(original_text, is_test_dataset):
 				else:
 					sentence_embeddings.append(sent_emb)					
 				labels.append(label)
+				#print(clean_text_utf[index_text], original_text_utf[index_text], label)
 
 			if clean_text_utf[index_text] == clean_token[i]:
 				index_text += 1
@@ -342,8 +343,6 @@ def create_examples(original_text, is_test_dataset):
 			[np.float32([0] * word_embedding_size)] * (window_sentence * 2 + 1)))
 		labels.append(np.float32([0, 0, 1, 0]))
 
-	#end = time.time()
-	#total_time = total_time + end - start_all
 	if is_test_dataset == False:
 		return (window_characters, word_embeddings, sentence_embeddings, labels)
 	else:
@@ -397,8 +396,7 @@ def get_dataset(dpath, sess, is_test_dataset=False):
 	else:
 		dataset = dataset.shuffle(args.buffer_size_shuffle)
 		dataset = dataset.batch(batch_size)
-		
-	dataset = dataset.prefetch(size_prefetch_buffer)
+		dataset = dataset.prefetch(size_prefetch_buffer)
 
 	return dataset
 
@@ -423,6 +421,10 @@ def compute_test_accuracy(sess, model):
 	total_words = 0
 	correct_predicted_words = 0
 	correct_predicted_chars = 0
+	wrong_restoration_words  = {}
+	correct_restoration_words = {}
+	acc_restoration_word = {}
+	all_words= set()
 
 	while True:
 		try:
@@ -430,7 +432,9 @@ def compute_test_accuracy(sess, model):
 			test_string_word, _, _, _ = test_inp
 			prediction_index += 1
 			current_test_batch += 1
-			nr_chars_in_word = count_chars_in_interest(test_string_word[0])
+			word = test_string_word[0]
+			all_words.add(word)
+			nr_chars_in_word = count_chars_in_interest(word)
 			correct_prediction_word = True
 
 			for i in range(nr_chars_in_word):
@@ -446,38 +450,68 @@ def compute_test_accuracy(sess, model):
 				if current_test_batch == nr_test_batches:
 					break
 
-				# not end of the word yet
+				# if not end of the word yet
 				if i < nr_chars_in_word - 1:
 					_, test_out = sess.run(test_next_element)
 					prediction_index += 1
 					current_test_batch += 1
 			
 			total_words += 1
+
 			if correct_prediction_word == True:
 				correct_predicted_words += 1
+				if word in correct_restoration_words:
+					correct_restoration_words[word] += 1
+				else:
+					correct_restoration_words[word] = 1
+			else:
+				if word in wrong_restoration_words:
+					wrong_restoration_words[word] += 1
+				else:
+					wrong_restoration_words[word] = 1
 				
 			if current_test_batch == nr_test_batches:
 				break
 
 		except tf.errors.OutOfRangeError:
 			break
-	(char_acc, word_acc) = (correct_predicted_chars / args.number_samples_test, correct_predicted_words / total_words)
-	print("char acc: " + str(char_acc) + " ,word accuracy: " + str(word_acc))
+
+	for w in all_words:
+		wrong = 0
+		correct = 0
+		if w in wrong_restoration_words:
+			wrong = wrong_restoration_words[w]
+		if w in correct_restoration_words:
+			correct = correct_restoration_words[w]
+		#print(w, wrong, correct)
+		if wrong + correct >= args.minimum_occurrence_word_restoration:
+			acc_restoration_word[w] = wrong / (wrong + correct)
+
+	index_word = 0
+	for key, value in sorted(acc_restoration_word.items(), key=lambda x: x[1], reverse=True):
+		print("word '"  + key.decode('utf-8') + "' acc: " +  str(value))
+		index_word += 1
+		if index_word == args.top_wrong_words_restoration:
+			break
+	(char_acc, word_acc) = (correct_predicted_chars / nr_test_batches, correct_predicted_words / total_words)
+	print("char acc: " + str(char_acc) + ", word accuracy: " + str(word_acc))
 	return char_acc, word_acc
 
 def set_up_folders_saved_models():
 	full_path_dir = folder_saved_models + args.folder_saved_model_per_epoch
-	if args.save_weights == True:
-		if os.path.exists(folder_saved_models) == False:
+	if args.save_model == True:
+		if os.path.exists(full_path_dir) == False:
 			os.makedirs(full_path_dir)
-		elif os.path.exists(full_path_dir) == False:
-			os.makedirs(full_path_dir)
+		elif args.load_model_name is None:
+			print('a folder with the same name (' + args.folder_saved_model_per_epoch +\
+				 ') for saving model already exists, delete it to continue or give other name to the folder of the saved model')
+			exit(0)
 
 def parse_args():
 	global args
 	parser = argparse.ArgumentParser(description='Run diacritics model')
-	parser.add_argument('-s', dest="save_weights", action='store_false', default=True,\
-						help="save the weights, default=true")
+	parser.add_argument('-s', dest="save_model", action='store_false', default=True,\
+						help="save the model (and wights), default=true")
 	parser.add_argument('-f', dest="folder_saved_model_per_epoch",\
 						action='store', default="char_word_sentence",\
 						help="name of the folder to store the weights, default: char_word_sentence")
@@ -515,7 +549,13 @@ def parse_args():
 	parser.add_argument('-mgpu', dest="percent_memory_gpu",\
 						action='store', default=0.2, type=float,\
 						help="percentage of the gpu memory to use, default=0.2")
-
+	parser.add_argument('-wrong', dest="top_wrong_words_restoration",\
+						action='store', default=30, type=int,\
+						help="hardest words to restore, default=30")
+	parser.add_argument('-occ', dest="minimum_occurrence_word_restoration",\
+						action='store', default=30, type=int,\
+						help="minimum occurrences of a word to be included in statistics\
+						of the hardest words to restorate, default=30")
 	args = parser.parse_args()
 	args.folder_saved_model_per_epoch += '/'
 	if args.load_model_name is not None:
@@ -537,57 +577,62 @@ def get_number_samples():
 # construct the model 
 def construct_model(sess):
 	
-	vocabulary_size = max_unicode_allowed + 1
-	# character window 
-	input_character_window = keras.layers.Input(shape=(window_character * 2 + 1,))
-	character_embeddings_layer = keras.layers.Embedding(\
-								input_dim=vocabulary_size,\
-								output_dim=character_embedding_size)(input_character_window)
-
-	character_lstm_layer = keras.layers.LSTM(
-							units=characters_cell_size,\
-							input_shape=(window_character * 2 + 1, character_embedding_size,))
-
-	characters_bi_lstm_layer = keras.layers.Bidirectional(
-							layer=character_lstm_layer,\
-							merge_mode="concat")(character_embeddings_layer)
-	# word token					
-	word_embeddings_layer = keras.layers.Input(shape=(word_embedding_size,))
-
-	# sentence token
-	sentence_embeddings_layer = keras.layers.Input(shape=((window_sentence * 2 + 1, word_embedding_size,)))
-	sentence_lstm_layer = keras.layers.LSTM(units=sentence_cell_size,\
-											input_shape=(window_sentence * 2 + 1, word_embedding_size,))	
-
-	sentence_bi_lstm_layer = keras.layers.Bidirectional(layer=sentence_lstm_layer,\
-														merge_mode="concat")(sentence_embeddings_layer)
-	# merged
-	merged_layer = keras.layers.concatenate([characters_bi_lstm_layer, \
-				word_embeddings_layer, sentence_bi_lstm_layer], axis=-1)
-
-	dense_layer = keras.layers.Dense(neurons_dense_layer_after_merge, activation='tanh')(merged_layer)
-	output = keras.layers.Dense(classes, activation='softmax')(dense_layer)
-
-	model = keras.models.Model(inputs=[input_character_window, word_embeddings_layer, sentence_embeddings_layer],\
-							outputs=output)
-	model.compile(optimizer='adam',\
-				loss='categorical_crossentropy',\
-				metrics=['accuracy'])
-
 	if args.load_model_name is not None:
 		
 		folder_path_with_epochs = folder_saved_models + args.load_model_name 
 		epochs_files = os.listdir(folder_path_with_epochs)
 		sorted_epochs_files = sorted(epochs_files)
 		load_file = sorted_epochs_files[-1]
-		print('loading model ' + args.load_model_name + ' ' + load_file)
-		model.load_weights(folder_saved_models + args.load_model_name + load_file)
+		print('loading model from: ' + folder_saved_models +\
+		 		args.load_model_name + load_file)
+		#model.load_weights(folder_saved_models + args.load_model_name + load_file)
+		model = keras.models.load_model(folder_saved_models + args.load_model_name + load_file)
+	else:
+		vocabulary_size = max_unicode_allowed + 1
+		# character window 
+		input_character_window = keras.layers.Input(shape=(window_character * 2 + 1,))
+		character_embeddings_layer = keras.layers.Embedding(\
+									input_dim=vocabulary_size,\
+									output_dim=character_embedding_size)(input_character_window)
+
+		character_lstm_layer = keras.layers.LSTM(
+								units=characters_cell_size,\
+								input_shape=(window_character * 2 + 1, character_embedding_size,))
+
+		characters_bi_lstm_layer = keras.layers.Bidirectional(
+								layer=character_lstm_layer,\
+								merge_mode="concat")(character_embeddings_layer)
+		# word token					
+		word_embeddings_layer = keras.layers.Input(shape=(word_embedding_size,))
+
+		# sentence token
+		sentence_embeddings_layer = keras.layers.Input(shape=((window_sentence * 2 + 1, word_embedding_size,)))
+		sentence_lstm_layer = keras.layers.LSTM(units=sentence_cell_size,\
+												input_shape=(window_sentence * 2 + 1, word_embedding_size,))	
+
+		sentence_bi_lstm_layer = keras.layers.Bidirectional(layer=sentence_lstm_layer,\
+															merge_mode="concat")(sentence_embeddings_layer)
+		# merged
+		merged_layer = keras.layers.concatenate([characters_bi_lstm_layer, \
+					word_embeddings_layer, sentence_bi_lstm_layer], axis=-1)
+
+		dense_layer = keras.layers.Dense(neurons_dense_layer_after_merge, activation='tanh')(merged_layer)
+		output = keras.layers.Dense(classes, activation='softmax')(dense_layer)
+
+		model = keras.models.Model(inputs=[input_character_window, word_embeddings_layer, sentence_embeddings_layer],\
+								outputs=output)
+		model.compile(optimizer='adam',\
+					loss='categorical_crossentropy',\
+					metrics=['accuracy'])
 	return model
 
 if __name__ == "__main__":
 
 	create_lower_mapping()
 	parse_args()
+	if args.load_model_name is not None:
+		print('loading last epoch weights from ' + args.load_model_name)
+
 	inp_batches_train, inp_batches_test, inp_batches_valid = get_number_samples()
 	set_up_folders_saved_models()
 
@@ -637,11 +682,11 @@ if __name__ == "__main__":
 					verbose=1)
 
 				# save weights
-				if args.save_weights == True:
-					print('saving weights')
+				if args.save_model == True:
+					print('saving model (and weights)')
 					full_path_epoch_weights = folder_saved_models + args.folder_saved_model_per_epoch +\
 							'epoch_' + str(i) + '.h5'
-					model.save_weights(full_path_epoch_weights)
+					model.save(full_path_epoch_weights)
 				# validate 
 				[valid_loss, valid_acc] = model.evaluate([valid_char_window, valid_words, valid_sentence],\
 											valid_out,\
