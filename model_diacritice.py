@@ -22,6 +22,7 @@ dict_avg_words = {}
 
 # the weights of the model will be saved in a folder per each epoch
 folder_saved_models = "saved_models/"
+fast_text = "fastText/wiki.ro"
 
 window_sentence = 15 
 window_character = 6 # 2 * x + 1
@@ -197,17 +198,17 @@ def get_embeddings_sentence(clean_tokens_sentence, index_token):
 	for i in range(index_token - window_sentence, index_token + window_sentence + 1):
 		if i >= 0 and i < len(clean_tokens_sentence):
 			token = clean_tokens_sentence[i]
-			embeddings_sentence.append(get_avg_possible_word(token))
+			token_embedding = get_avg_possible_word(token)
+			embeddings_sentence.append(token_embedding)
+			with dict_lock:
+				dict_avg_words[token] = token_embedding
 		else:
 			embeddings_sentence.append(np.float32([0] * word_embedding_size))
 	return np.array(embeddings_sentence)
-	#return np.array(embeddings_sentence)
 
 # return an tuple input (window_char, embedding_token, embedding_sentence)
 def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, \
 				index_last_sent, index_token):
-	#global total_time_bkt
-	#global total_time_sent
 
 	# window with characters
 	w = []
@@ -221,25 +222,18 @@ def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, \
 		w.append(v1)
 	# token 
 	token = clean_tokens[index_sent][index_token]
-	#start_bkt = time.time()
 	token_embedding = get_avg_possible_word(token)
-	#end_bkt = time.time()
-	#total_time_bkt = total_time + end_bkt - start_bkt
 	with dict_lock:
 		dict_avg_words[token] = token_embedding
 
 	# sentence 
-	#start_sen = time.time()
 	# if is the same sentence don't recompute it
 	if index_last_sent is None or index_sent != index_last_sent:
 		sentence_embedding = get_embeddings_sentence(clean_tokens[index_sent], index_token)
 	else:
 		sentence_embedding = None
-	#end_sen = time.time()
-	#total_time_sent = total_time_sent + end_sen - start_sen
 
 	return (np.int32(w), token_embedding, sentence_embedding)
-	#return np.int32(np.array([0])), np.int32(np.array([0, 0])),  np.int32(np.array([0, 0, 0]))
 
 def replace_char(c):
 
@@ -310,7 +304,6 @@ def create_examples(original_text, is_test_dataset):
 				#print(original_text_utf[index_text], label)
 				win_char, word_emb, sent_emb = get_input_example(clean_text_utf, \
 						index_text, clean_tokens, index_sent, index_last_sent, index_token)
-
 				index_last_sent = index_sent
 				if is_test_dataset == True:
 					clean_words.append(clean_token)
@@ -488,13 +481,13 @@ def compute_test_accuracy(sess, model):
 			acc_restoration_word[w] = wrong / (wrong + correct)
 
 	index_word = 0
-	for key, value in sorted(acc_restoration_word.items(), key=lambda x: x[1], reverse=True):
+	for key, value in sorted(acc_restoration_word.items(), key=lambda x: x[1]):
 		print("word '"  + key.decode('utf-8') + "' acc: " +  str(value))
 		index_word += 1
 		if index_word == args.top_wrong_words_restoration:
 			break
 	(char_acc, word_acc) = (correct_predicted_chars / nr_test_batches, correct_predicted_words / total_words)
-	print("char acc: " + str(char_acc) + ", word accuracy: " + str(word_acc))
+	print("char acc: " + str(char_acc) + ", word accuracy: " + str(word_acc) + ' ')
 	return char_acc, word_acc
 
 def set_up_folders_saved_models():
@@ -577,6 +570,7 @@ def get_number_samples():
 # construct the model 
 def construct_model(sess):
 	
+	last_epoch = 0
 	if args.load_model_name is not None:
 		
 		folder_path_with_epochs = folder_saved_models + args.load_model_name 
@@ -585,8 +579,8 @@ def construct_model(sess):
 		load_file = sorted_epochs_files[-1]
 		print('loading model from: ' + folder_saved_models +\
 		 		args.load_model_name + load_file)
-		#model.load_weights(folder_saved_models + args.load_model_name + load_file)
 		model = keras.models.load_model(folder_saved_models + args.load_model_name + load_file)
+		last_epoch = len(sorted_epochs_files)
 	else:
 		vocabulary_size = max_unicode_allowed + 1
 		# character window 
@@ -624,7 +618,7 @@ def construct_model(sess):
 		model.compile(optimizer='adam',\
 					loss='categorical_crossentropy',\
 					metrics=['accuracy'])
-	return model
+	return model, last_epoch
 
 if __name__ == "__main__":
 
@@ -637,7 +631,7 @@ if __name__ == "__main__":
 	set_up_folders_saved_models()
 
 	if args.use_dummy_word_embeddings == False:
-		model_embeddings = FastTextWrapper.load_fasttext_format("fastText/wiki.ro")
+		model_embeddings = FastTextWrapper.load_fasttext_format(fast_text)
 	
 	config = tf.ConfigProto()
 	config.gpu_options.per_process_gpu_memory_fraction = args.percent_memory_gpu
@@ -656,14 +650,14 @@ if __name__ == "__main__":
 		iterator_train = dt_train.make_initializable_iterator()
 		iterator_valid = dt_valid.make_initializable_iterator()
 
-		model = construct_model(sess)
+		model, last_epoch = construct_model(sess)
 		# run test and validation 
 		if args.run_train_validation == True:
-			for i in range(args.epochs):
+			for i in range(last_epoch, last_epoch + args.epochs):
 
 				print('epoch: ' + str(i + 1))
 				# reset iterators
-				if i % args.reset_iterators_every_epochs == 0:
+				if (i - last_epoch) % args.reset_iterators_every_epochs == 0:
 					print('resseting iterators')
 					sess.run(iterator_valid.initializer)
 					valid_inp, valid_out = iterator_valid.get_next()
