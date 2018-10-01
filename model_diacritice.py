@@ -246,11 +246,11 @@ def replace_char(c):
 	if c in map_no_diac:
 		c = map_no_diac[c]
 
-	# if ord(c) > 255:
-	# 	return chr(replace_character)
-	# elif c in map_substitute_chars:
-	# 	return map_substitute_chars[c]
-	# else:
+	if ord(c) > 255:
+		return chr(replace_character)
+	elif c in map_substitute_chars:
+		return map_substitute_chars[c]
+	else:
 	return c
 
 def replace_char_original(c):
