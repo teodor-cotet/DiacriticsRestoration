@@ -246,12 +246,12 @@ def replace_char(c):
 	if c in map_no_diac:
 		c = map_no_diac[c]
 
-	if ord(c) > 255:
-		return chr(replace_character)
-	elif c in map_substitute_chars:
-		return map_substitute_chars[c]
-	else:
-		return c
+	# if ord(c) > 255:
+	# 	return chr(replace_character)
+	# elif c in map_substitute_chars:
+	# 	return map_substitute_chars[c]
+	# else:
+	return c
 
 def replace_char_original(c):
 	if c in map_correct_diac:
@@ -270,66 +270,73 @@ def count_chars_in_interest(s):
 	return cnt_chars
 
 def create_examples(original_text, is_test_dataset):
+	drop_example = False
 
-	original_text_utf = original_text.decode('utf-8')
-	original_text_utf = "".join([replace_char_original(c) for c in original_text_utf])
-	# replace some strange characters which are modified by tokenization
-	clean_text_utf = "".join([replace_char(c) for c in original_text_utf])
-	clean_sentences = nltk.sent_tokenize(clean_text_utf)
-	clean_tokens = []
+	try:
+		original_text_utf = original_text.decode('utf-8')
+		original_text_utf = "".join([replace_char_original(c) for c in original_text_utf])
+		# replace some strange characters which are modified by tokenization
+		clean_text_utf = "".join([replace_char(c) for c in original_text_utf])
+		clean_sentences = nltk.sent_tokenize(clean_text_utf)
+		clean_tokens = []
 
-	# construct tokens
-	for i in range(len(clean_sentences)):
-		clean_tokens_sent = nltk.word_tokenize(clean_sentences[i])
-		clean_tokens.append(clean_tokens_sent)
+		# construct tokens
+		for i in range(len(clean_sentences)):
+			clean_tokens_sent = nltk.word_tokenize(clean_sentences[i])
+			clean_tokens.append(clean_tokens_sent)
 
-	index_text = 0 # current position in text
-	index_sent = 0 # current sentence
-	index_token = 0 # current token
-	index_last_sent = None # last sentence computed
+		index_text = 0 # current position in text
+		index_sent = 0 # current sentence
+		index_token = 0 # current token
+		index_last_sent = None # last sentence computed
 
-	# input and output lists
-	clean_words = []
-	window_characters = []
-	word_embeddings = []
-	sentence_embeddings = []
-	labels = []
-	while index_sent < len(clean_tokens):
-		clean_token = clean_tokens[index_sent][index_token]
-		i = 0		
-		while i < len(clean_token):
-			if clean_text_utf[index_text] in characters_in_interest:
+		# input and output lists
+		clean_words = []
+		window_characters = []
+		word_embeddings = []
+		sentence_embeddings = []
+		labels = []
+		while index_sent < len(clean_tokens):
+			clean_token = clean_tokens[index_sent][index_token]
+			i = 0		
+			while i < len(clean_token):
 
-				label = get_label(index_text, clean_text_utf, original_text_utf)
-				#print(original_text_utf[index_text], label)
-				win_char, word_emb, sent_emb = get_input_example(clean_text_utf, \
-						index_text, clean_tokens, index_sent, index_last_sent, index_token)
-				index_last_sent = index_sent
-				if is_test_dataset == True:
-					clean_words.append(clean_token)
-				window_characters.append(win_char)
-				word_embeddings.append(word_emb)
-				# sentence already computed
-				if sent_emb is None:
-					sentence_embeddings.append(sentence_embeddings[-1])
-				else:
-					sentence_embeddings.append(sent_emb)					
-				labels.append(label)
-				#print(clean_text_utf[index_text], original_text_utf[index_text], label)
+				if clean_text_utf[index_text] in characters_in_interest:
 
-			if clean_text_utf[index_text] == clean_token[i]:
-				index_text += 1
-				i += 1
-			else: # discard char in text
-				index_text += 1
+					label = get_label(index_text, clean_text_utf, original_text_utf)
+					#print(original_text_utf[index_text], label)
+					win_char, word_emb, sent_emb = get_input_example(clean_text_utf, \
+							index_text, clean_tokens, index_sent, index_last_sent, index_token)
+					index_last_sent = index_sent
+					if is_test_dataset == True:
+						clean_words.append(clean_token)
+					window_characters.append(win_char)
+					word_embeddings.append(word_emb)
+					# sentence already computed
+					if sent_emb is None:
+						sentence_embeddings.append(sentence_embeddings[-1])
+					else:
+						sentence_embeddings.append(sent_emb)					
+					labels.append(label)
+					#print(clean_text_utf[index_text], original_text_utf[index_text], label)
+
+				if clean_text_utf[index_text] == clean_token[i]:
+					index_text += 1
+					i += 1
+				else: # discard char in text
+					index_text += 1
+
+			if index_token == len(clean_tokens[index_sent]) - 1:
+				index_token = 0
+				index_sent += 1
+			else:
+				index_token += 1
+	except:
+		drop_example = True
 			
-		if index_token == len(clean_tokens[index_sent]) - 1:
-			index_token = 0
-			index_sent += 1
-		else:
-			index_token += 1
+			
 	# dummy values for empty sentence
-	if len(window_characters) == 0:
+	if len(window_characters) == 0 or drop_example == True:
 		window_characters.append(np.int32([0] * (window_character * 2 + 1)))
 		word_embeddings.append(np.float32([0] * word_embedding_size))
 		sentence_embeddings.append(np.array(\
@@ -504,7 +511,7 @@ def parse_args():
 	global args
 	parser = argparse.ArgumentParser(description='Run diacritics model')
 	parser.add_argument('-s', dest="save_model", action='store_false', default=True,\
-						help="save the model (and wights), default=true")
+						help="save the model (and weights), default=true")
 	parser.add_argument('-f', dest="folder_saved_model_per_epoch",\
 						action='store', default="char_word_sentence",\
 						help="name of the folder to store the weights, default: char_word_sentence")
