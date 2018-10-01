@@ -251,7 +251,7 @@ def replace_char(c):
 	elif c in map_substitute_chars:
 		return map_substitute_chars[c]
 	else:
-	return c
+		return c
 
 def replace_char_original(c):
 	if c in map_correct_diac:
@@ -556,11 +556,26 @@ def parse_args():
 						action='store', default=30, type=int,\
 						help="minimum occurrences of a word to be included in statistics\
 						of the hardest words to restorate, default=30")
+	parser.add_argument('-char', dest="use_window_characters",\
+						action='store_false', default=True,\
+						help="if model should use window of characters, default=True")
+	parser.add_argument('-word', dest="use_word_embedding",\
+						action='store_false', default=True,\
+						help="if model should use word embeddings, default=True")
+	parser.add_argument('-sent', dest="use_sentence_embedding",\
+						action='store_false', default=True,\
+						help="if model should use sentence embedding, default=True")
+	parser.add_argument('-hidden', dest="hidden_neurons", required=True,\
+						action='append', type=int,\
+						help="number of neurons on the hidden layer, no default")
 	args = parser.parse_args()
 	args.folder_saved_model_per_epoch += '/'
 	if args.load_model_name is not None:
 		args.load_model_name += '/'
-	print(args)
+	
+	for k in args.__dict__:
+		if args.__dict__[k] is not None:
+			print(k, '->', args.__dict__[k])
 
 def get_number_samples():
 	global args
@@ -573,6 +588,18 @@ def get_number_samples():
 		inp_batches_test = samples_number['full_test'] // batch_size
 		inp_batches_valid = samples_number['full_valid'] // batch_size
 	return inp_batches_train, inp_batches_test, inp_batches_valid
+
+def get_input_list(characters_bi_lstm_layer, word_embeddings_layer, sentence_bi_lstm_layer):
+	input_list = []
+	if args.use_window_characters == True:
+		input_list.append(characters_bi_lstm_layer)
+
+	if args.use_word_embedding == True:
+		input_list.append(word_embeddings_layer)
+
+	if args.use_sentence_embedding == True:
+		input_list.append(sentence_bi_lstm_layer)
+	return input_list
 
 # construct the model 
 def construct_model(sess):
@@ -614,11 +641,17 @@ def construct_model(sess):
 		sentence_bi_lstm_layer = keras.layers.Bidirectional(layer=sentence_lstm_layer,\
 															merge_mode="concat")(sentence_embeddings_layer)
 		# merged
-		merged_layer = keras.layers.concatenate([characters_bi_lstm_layer, \
-					word_embeddings_layer, sentence_bi_lstm_layer], axis=-1)
-
-		dense_layer = keras.layers.Dense(neurons_dense_layer_after_merge, activation='tanh')(merged_layer)
-		output = keras.layers.Dense(classes, activation='softmax')(dense_layer)
+		input_list = get_input_list(characters_bi_lstm_layer,\
+			word_embeddings_layer, sentence_bi_lstm_layer)
+		if len(input_list) > 1:
+			merged_layer = keras.layers.concatenate(input_list, axis=-1)
+		else:
+			merged_layer = input_list[0]
+		prev_layer = merged_layer
+		# hidden layers
+		for h_neurons in args.hidden_neurons:
+			prev_layer = keras.layers.Dense(h_neurons, activation='tanh')(prev_layer)
+		output = keras.layers.Dense(classes, activation='softmax')(prev_layer)
 
 		model = keras.models.Model(inputs=[input_character_window, word_embeddings_layer, sentence_embeddings_layer],\
 								outputs=output)
