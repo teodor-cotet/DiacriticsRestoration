@@ -34,7 +34,6 @@ word_embedding_size = 300
 characters_cell_size = 64
 sentence_cell_size = 300
 neurons_dense_layer_after_merge = 512
-classes = 4
 batch_size = 256
 limit_backtracking_characters = 10
 
@@ -128,11 +127,14 @@ def get_label(i, clean_text_utf, original_text_utf):
 			case = 2
 	elif clean_text_utf[i] == 's':
 		if original_text_utf[i] == 'ș':
-			case = 3
+			if args.nr_classes == 5:
+				case = 4
+			else:
+				case = 3
 		elif original_text_utf[i] == 's':
 			case = 2
 
-	label = np.float32([0] * 4)
+	label = np.float32([0] * args.nr_classes)
 	label[case] = np.float32(1.0)
 	return label
 
@@ -341,7 +343,9 @@ def create_examples(original_text, is_test_dataset):
 		word_embeddings.append(np.float32([0] * word_embedding_size))
 		sentence_embeddings.append(np.array(\
 			[np.float32([0] * word_embedding_size)] * (window_sentence * 2 + 1)))
-		labels.append(np.float32([0, 0, 1, 0]))
+		lab = np.float32([0] * args.nr_classes)
+		lab[2] = np.float32(1.0)
+		labels.append(lab)
 
 	if is_test_dataset == False:
 		return (window_characters, word_embeddings, sentence_embeddings, labels)
@@ -483,7 +487,6 @@ def compute_test_accuracy(sess, model):
 			wrong = wrong_restoration_words[w]
 		if w in correct_restoration_words:
 			correct = correct_restoration_words[w]
-		#print(w, wrong, correct)
 		if wrong + correct >= args.minimum_occurrence_word_restoration:
 			acc_restoration_word[w] = wrong / (wrong + correct)
 
@@ -568,11 +571,18 @@ def parse_args():
 	parser.add_argument('-hidden', dest="hidden_neurons", required=True,\
 						action='append', type=int,\
 						help="number of neurons on the hidden layer, no default")
+	parser.add_argument('-classes', dest="nr_classes", default=4,\
+						action='store', type=int,\
+						help="number of classes to be used (4 or 5), default=4")
 	args = parser.parse_args()
 	args.folder_saved_model_per_epoch += '/'
 	if args.load_model_name is not None:
 		args.load_model_name += '/'
-	
+
+	if args.nr_classes != 4 and args.nr_classes != 5:
+		print('classes has to be either 4 or 5, exit')
+		exit(0)
+
 	for k in args.__dict__:
 		if args.__dict__[k] is not None:
 			print(k, '->', args.__dict__[k])
@@ -651,7 +661,7 @@ def construct_model(sess):
 		# hidden layers
 		for h_neurons in args.hidden_neurons:
 			prev_layer = keras.layers.Dense(h_neurons, activation='tanh')(prev_layer)
-		output = keras.layers.Dense(classes, activation='softmax')(prev_layer)
+		output = keras.layers.Dense(args.nr_classes, activation='softmax')(prev_layer)
 
 		model = keras.models.Model(inputs=[input_character_window, word_embeddings_layer, sentence_embeddings_layer],\
 								outputs=output)
