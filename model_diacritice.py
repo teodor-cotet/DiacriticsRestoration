@@ -482,7 +482,7 @@ def compute_test_accuracy(sess, model):
 			test_string_word, _, _, _ = test_inp
 			current_test_batch += 1
 			index_batch = 0
-			if current_test_batch % 100:
+			if current_test_batch % 100 == 0:
 				print('batch {} out of {}'.format(current_test_batch, nr_test_batches))
 			while index_batch < len(test_string_word):
 				# skip last word no matter what
