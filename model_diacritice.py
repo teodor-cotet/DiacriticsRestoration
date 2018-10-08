@@ -406,32 +406,43 @@ def get_dataset(dpath, sess, is_test_dataset=False):
 		dataset = dataset.prefetch(size_prefetch_buffer)
 
 	return dataset
+def get_charr(simple_c, case):
 
-def compute_prediction(correct_case, simple_c, prediction_chars, correct=0):
-	# correct 1 - true, 0 - false
 	if simple_c == 'a':
-		if correct_case == 0: # ă
-			prediction_chars['ă'][correct] += 1
-		elif correct_case == 1: # 
-			prediction_chars['â'][correct] += 1
-		elif correct_case == 2:
-			prediction_chars['a'][correct] += 1
+		if case == 0: # ă
+			return 'ă'
+		elif case == 1: # 
+			return 'â'
+		elif case == 2:
+			return 'a'
 	elif simple_c == 'i':
-		if correct_case == 1:
-			prediction_chars['î'][correct] += 1
-		elif correct_case == 2:
-			prediction_chars['i'][correct] += 1
+		if case == 1:
+			return 'î'
+		elif case == 2:
+			return 'i'
 	elif simple_c == 't':
-		if correct_case == 3:
-			prediction_chars['ț'][correct] += 1
-		elif correct_case == 2:
-			prediction_chars['t'][correct] += 1
+		if case == 3:
+			return 'ț'
+		elif case == 2:
+			return 't'
 	elif simple_c == 's':
-		if correct_case == 3 or correct_case == 4:
-			prediction_chars['ș'][correct] += 1
-		elif correct_case == 2:
-			prediction_chars['s'][correct] += 1
+		if case == 3 and args.nr_classes == 4:
+			return 'ș'
+		elif case == 4 and args.nr_classes == 5:
+			return 'ș'
+		elif case == 2:
+			return 's'
+	return 'a'
+def compute_prediction(correct_case, predicted_case, simple_c, precision_chars, recall_chars):
+	correct_char = get_charr(simple_c, correct_case)
+	pred_char = get_charr(simple_c, predicted_case)
 
+	if pred_char == correct_char:
+		# correct results
+		recall_chars[correct_char][0] += 1
+		precision_chars[correct_char][0] += 1
+	precision_chars[pred_char][1] += 1
+	recall_chars[correct_char][1] += 1
 	
 def compute_test_accuracy(sess, model):
 	dt_test = get_dataset(test_files, sess, True)
@@ -455,9 +466,10 @@ def compute_test_accuracy(sess, model):
 	correct_predicted_words = 0
 	correct_predicted_chars = 0
 	wrong_predicatd_chars = 0
-	prediction_chars = {'ă': [0, 0], 'â': [0, 0], 'a': [0, 0], 'i': [0, 0], 'î': [0, 0], 's': [0, 0],\
+	precision_chars = {'ă': [0, 0], 'â': [0, 0], 'a': [0, 0], 'i': [0, 0], 'î': [0, 0], 's': [0, 0],\
 						'ș': [0, 0], 't': [0, 0], 'ț': [0, 0]}
-	# prediction_chars[x] means that it should have been x, but it something else
+	recall_chars = {'ă': [0, 0], 'â': [0, 0], 'a': [0, 0], 'i': [0, 0], 'î': [0, 0], 's': [0, 0],\
+						'ș': [0, 0], 't': [0, 0], 'ț': [0, 0]}
 
 	wrong_restoration_words  = {}
 	correct_restoration_words = {}
@@ -491,12 +503,11 @@ def compute_test_accuracy(sess, model):
 
 					if predicted_case != correct_case:
 						correct_prediction_word = False
-						compute_prediction(correct_case, chars_in_int[i], prediction_chars, correct=0)
 						wrong_predicatd_chars += 1
 					else:
-						compute_prediction(correct_case, chars_in_int[i], prediction_chars, correct=1)
 						correct_predicted_chars += 1
-				
+					compute_prediction(correct_case, predicted_case, chars_in_int[i], precision_chars, recall_chars)
+
 				total_words += 1
 
 				if correct_prediction_word == True:
@@ -528,11 +539,29 @@ def compute_test_accuracy(sess, model):
 		if index_word == args.top_wrong_words_restoration:
 			break
 
-	print('accuracy per characters: ')
+	print('precision per character: ')
+	
+	for key, values in precision_chars.items():
+		if values[1] != 0:
+			p = values[0] / values[1]
+			print(key + ': ' + str(p))
+			precision_chars[key] = p
+	
 
-	for key, values in prediction_chars.items():
-		if values[0] + values[1] != 0:
-			print(key + ': ' + str(values[1] / (values[0] + values[1])))
+	print('recall per character: ')
+
+	for key, values in recall_chars.items():
+		if values[1] != 0:
+			r = values[0] / values[1]
+			print(key + ': ' + str(r))
+			recall_chars[key] = r
+	
+	print('F1 measure per character: ')
+	for key, r in recall_chars.items():
+			p = precision_chars[key]
+			if p != 0 and r != 0:
+				f1 = 2 * p * r / (p + r)
+				print(key + ': ' + str(f1))
 
 	(char_acc, word_acc) = (correct_predicted_chars / (correct_predicted_chars + wrong_predicatd_chars), correct_predicted_words / total_words)
 	print("char acc: " + str(char_acc) + ", word accuracy: " + str(word_acc) + ' ')
