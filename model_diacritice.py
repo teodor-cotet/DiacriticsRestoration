@@ -34,10 +34,10 @@ word_embedding_size = 300
 characters_cell_size = 64
 sentence_cell_size = 300
 neurons_dense_layer_after_merge = 512
-batch_size = 256
+batch_size = 4096
 limit_backtracking_characters = 10
 
-CPUS = 16
+CPUS = 7
 size_prefetch_buffer = 10
 max_unicode_allowed = 770
 replace_character = 255
@@ -265,11 +265,13 @@ def replace_char_original(c):
 
 def count_chars_in_interest(s):
 	cnt_chars = 0
+	chars_in_int = []
 	for c in s:
 		character_c = chr(c)
 		if character_c in characters_in_interest:
 			cnt_chars += 1
-	return cnt_chars
+			chars_in_int.append(character_c)
+	return cnt_chars, chars_in_int
 
 def create_examples(original_text, is_test_dataset):
 	drop_example = False
@@ -339,13 +341,14 @@ def create_examples(original_text, is_test_dataset):
 			
 	# dummy values for empty sentence
 	if len(window_characters) == 0 or drop_example == True:
-		window_characters.append(np.int32([0] * (window_character * 2 + 1)))
-		word_embeddings.append(np.float32([0] * word_embedding_size))
-		sentence_embeddings.append(np.array(\
-			[np.float32([0] * word_embedding_size)] * (window_sentence * 2 + 1)))
+		clean_words = ['a']
+		window_characters = [np.int32([0] * (window_character * 2 + 1))]
+		word_embeddings = [np.float32([0] * word_embedding_size)]
+		sentence_embeddings = [np.array(\
+			[np.float32([0] * word_embedding_size)] * (window_sentence * 2 + 1))]
 		lab = np.float32([0] * args.nr_classes)
 		lab[2] = np.float32(1.0)
-		labels.append(lab)
+		labels = [lab]
 
 	if is_test_dataset == False:
 		return (window_characters, word_embeddings, sentence_embeddings, labels)
@@ -396,7 +399,7 @@ def get_dataset(dpath, sess, is_test_dataset=False):
 	
 	# do not shuffle or batch test dataset
 	if is_test_dataset == True:
-		dataset = dataset.batch(1)
+		dataset = dataset.batch(batch_size, drop_remainder=True)
 	else:
 		dataset = dataset.shuffle(args.buffer_size_shuffle)
 		dataset = dataset.batch(batch_size)
@@ -404,6 +407,32 @@ def get_dataset(dpath, sess, is_test_dataset=False):
 
 	return dataset
 
+def compute_prediction(correct_case, simple_c, prediction_chars, correct=0):
+	# correct 1 - true, 0 - false
+	if simple_c == 'a':
+		if correct_case == 0: # ă
+			prediction_chars['ă'][correct] += 1
+		elif correct_case == 1: # 
+			prediction_chars['â'][correct] += 1
+		elif correct_case == 2:
+			prediction_chars['a'][correct] += 1
+	elif simple_c == 'i':
+		if correct_case == 1:
+			prediction_chars['î'][correct] += 1
+		elif correct_case == 2:
+			prediction_chars['i'][correct] += 1
+	elif simple_c == 't':
+		if correct_case == 3:
+			prediction_chars['ț'][correct] += 1
+		elif correct_case == 2:
+			prediction_chars['t'][correct] += 1
+	elif simple_c == 's':
+		if correct_case == 3 or correct_case == 4:
+			prediction_chars['ș'][correct] += 1
+		elif correct_case == 2:
+			prediction_chars['s'][correct] += 1
+
+	
 def compute_test_accuracy(sess, model):
 	dt_test = get_dataset(test_files, sess, True)
 	iterator_test = dt_test.make_initializable_iterator()
@@ -413,18 +442,23 @@ def compute_test_accuracy(sess, model):
 
 	test_inp_pred, test_out_pred = iterator_test.get_next()
 	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred = test_inp_pred
-
-	predictions = model.predict(x=[test_char_window_pred, test_words_pred, test_sentence_pred],\
+	#  test_words_pred, test_sentence_pred],\
+	predictions = model.predict(x=test_char_window_pred,
 				  verbose=1,
 				  steps=nr_test_batches)
-
+	print(len(predictions))
 	current_test_batch = 0
 	sess.run(iterator_test.initializer)
 	test_next_element = iterator_test.get_next()
-	prediction_index = -1
+	prediction_index = 0
 	total_words = 0
 	correct_predicted_words = 0
 	correct_predicted_chars = 0
+	wrong_predicatd_chars = 0
+	prediction_chars = {'ă': [0, 0], 'â': [0, 0], 'a': [0, 0], 'i': [0, 0], 'î': [0, 0], 's': [0, 0],\
+						'ș': [0, 0], 't': [0, 0], 'ț': [0, 0]}
+	# prediction_chars[x] means that it should have been x, but it something else
+
 	wrong_restoration_words  = {}
 	correct_restoration_words = {}
 	acc_restoration_word = {}
@@ -434,69 +468,73 @@ def compute_test_accuracy(sess, model):
 		try:
 			test_inp, test_out = sess.run(test_next_element)
 			test_string_word, _, _, _ = test_inp
-			prediction_index += 1
 			current_test_batch += 1
-			word = test_string_word[0]
-			all_words.add(word)
-			nr_chars_in_word = count_chars_in_interest(word)
-			correct_prediction_word = True
-
-			for i in range(nr_chars_in_word):
-				pred_vector = predictions[prediction_index]
-				predicted_case = get_case(pred_vector)
-				correct_case = get_case(test_out[0])
-
-				if predicted_case != correct_case:
-					correct_prediction_word = False
-				else:
-					correct_predicted_chars += 1
-
-				if current_test_batch == nr_test_batches:
+			index_batch = 0
+			exit_batch = False
+			#print('batch {} out of {}'.format(current_test_batch, nr_test_batches))
+			while index_batch < len(test_string_word):
+				# skip last word no matter what
+				word = test_string_word[index_batch]
+				all_words.add(word)
+				nr_chars_in_word, chars_in_int = count_chars_in_interest(word)
+				if nr_chars_in_word > len(test_string_word) - index_batch:
+					prediction_index += len(test_string_word) - index_batch
 					break
 
-				# if not end of the word yet
-				if i < nr_chars_in_word - 1:
-					_, test_out = sess.run(test_next_element)
+				correct_prediction_word = True
+				for i in range(nr_chars_in_word):
+					pred_vector = predictions[prediction_index]
+					predicted_case = get_case(pred_vector)
+					correct_case = get_case(test_out[index_batch])
+					index_batch += 1
 					prediction_index += 1
-					current_test_batch += 1
-			
-			total_words += 1
 
-			if correct_prediction_word == True:
-				correct_predicted_words += 1
-				if word in correct_restoration_words:
-					correct_restoration_words[word] += 1
-				else:
-					correct_restoration_words[word] = 1
-			else:
-				if word in wrong_restoration_words:
-					wrong_restoration_words[word] += 1
-				else:
-					wrong_restoration_words[word] = 1
+					if predicted_case != correct_case:
+						correct_prediction_word = False
+						compute_prediction(correct_case, chars_in_int[i], prediction_chars, correct=0)
+						wrong_predicatd_chars += 1
+					else:
+						compute_prediction(correct_case, chars_in_int[i], prediction_chars, correct=1)
+						correct_predicted_chars += 1
 				
+				total_words += 1
+
+				if correct_prediction_word == True:
+					correct_predicted_words += 1
+					if word in correct_restoration_words:
+						correct_restoration_words[word] += 1
+					else:
+						correct_restoration_words[word] = 1
+				else:
+					if word in wrong_restoration_words:
+						wrong_restoration_words[word] += 1
+					else:
+						wrong_restoration_words[word] = 1
+					
 			if current_test_batch == nr_test_batches:
 				break
-
 		except tf.errors.OutOfRangeError:
 			break
 
-	for w in all_words:
-		wrong = 0
-		correct = 0
-		if w in wrong_restoration_words:
-			wrong = wrong_restoration_words[w]
-		if w in correct_restoration_words:
-			correct = correct_restoration_words[w]
-		if wrong + correct >= args.minimum_occurrence_word_restoration:
-			acc_restoration_word[w] = wrong / (wrong + correct)
-
 	index_word = 0
-	for key, value in sorted(acc_restoration_word.items(), key=lambda x: x[1]):
-		print("word '"  + key.decode('utf-8') + "' acc: " +  str(value))
+	print('highest missed words: ')
+	for key, value in sorted(wrong_restoration_words.items(), key=lambda x: x[1], reverse=True):
+		correct = 0
+		if key in correct_restoration_words:
+			correct = correct_restoration_words[key]
+		print("word '"  + key.decode('utf-8') + "' wrong: " +  str(value) + \
+			' correct: ' + str(correct) + ' accuracy: ' + str(1.0 * correct / (value + correct)))
 		index_word += 1
 		if index_word == args.top_wrong_words_restoration:
 			break
-	(char_acc, word_acc) = (correct_predicted_chars / nr_test_batches, correct_predicted_words / total_words)
+
+	print('accuracy per characters: ')
+
+	for key, values in prediction_chars.items():
+		if values[0] + values[1] != 0:
+			print(key + ': ' + str(values[1] / (values[0] + values[1])))
+
+	(char_acc, word_acc) = (correct_predicted_chars / (correct_predicted_chars + wrong_predicatd_chars), correct_predicted_words / total_words)
 	print("char acc: " + str(char_acc) + ", word accuracy: " + str(word_acc) + ' ')
 	return char_acc, word_acc
 
@@ -525,7 +563,7 @@ def parse_args():
 						action='store_true', default=False,\
 						help="if you want to run test dataset, default=false")
 	parser.add_argument('-n_test', dest="number_samples_test",\
-						action='store', default=100000, type=int,\
+						action='store', default=samples_number['par_test'] // batch_size, type=int,\
 						help="number of samples for test accuracy, if -test is not set \
 						this does not have any effect, default=100000")
 	parser.add_argument('-e', dest="epochs",\
@@ -555,10 +593,6 @@ def parse_args():
 	parser.add_argument('-wrong', dest="top_wrong_words_restoration",\
 						action='store', default=30, type=int,\
 						help="hardest words to restore, default=30")
-	parser.add_argument('-occ', dest="minimum_occurrence_word_restoration",\
-						action='store', default=30, type=int,\
-						help="minimum occurrences of a word to be included in statistics\
-						of the hardest words to restorate, default=30")
 	parser.add_argument('-char', dest="use_window_characters",\
 						action='store_false', default=True,\
 						help="if model should use window of characters, default=True")
@@ -695,14 +729,15 @@ if __name__ == "__main__":
 		print("char, word, sentence - char cell:{}, word cell: {}, hidden: {}"\
 			.format(characters_cell_size, sentence_cell_size, neurons_dense_layer_after_merge))
 
-		dt_train = get_dataset(train_files, sess)
-		dt_valid = get_dataset(valid_files, sess)
-		iterator_train = dt_train.make_initializable_iterator()
-		iterator_valid = dt_valid.make_initializable_iterator()
-
 		model, last_epoch = construct_model(sess)
 		# run test and validation 
 		if args.run_train_validation == True:
+
+			dt_train = get_dataset(train_files, sess)
+			dt_valid = get_dataset(valid_files, sess)
+			iterator_train = dt_train.make_initializable_iterator()
+			iterator_valid = dt_valid.make_initializable_iterator()
+
 			for i in range(last_epoch, last_epoch + args.epochs):
 
 				print('epoch: ' + str(i + 1))
