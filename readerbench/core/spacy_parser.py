@@ -35,45 +35,45 @@ def convertToPenn(pos: str, lang: str) -> str:
         pos = pos.lower()
         if pos.startswith('noun') or pos.startswith('propn'):
             return "NN"
-        if pos.startwith("verb"):
+        if pos.startswith("verb"):
             return "VB"
-        if pos.startwith("adj"):
+        if pos.startswith("adj"):
             return "JJ"
-        if pos.startwith("adv"):
+        if pos.startswith("adv"):
             return "RB"
-        if pos.startwith("adp"):
+        if pos.startswith("adp"):
             return "IN"
-        if pos.startwith("cconj"):
+        if pos.startswith("cconj"):
             return "CC"
         return ""
     if lang == 'nl':
         pos = pos.lower()
         if pos.startswith('n_') or pos.startswith('n|') or pos.startswith('propn'):
             return "NN"
-        if pos.startwith("v_") or pos.startwith("v|"):
+        if pos.startswith("v_") or pos.startswith("v|"):
             return "VB"
-        if pos.startwith("adj"):
+        if pos.startswith("adj"):
             return "JJ"
-        if pos.startwith("adv"):
+        if pos.startswith("adv"):
             return "RB"
-        if pos.startwith("adp"):
+        if pos.startswith("adp"):
             return "IN"
-        if pos.startwith("cconj") or pos.startwith("conj"):
+        if pos.startswith("cconj") or pos.startswith("conj"):
             return "CC"
         return ""
     if lang == 'ro':
         pos = pos.lower()
         if pos.startswith("n"):
             return "NN"
-        if pos.startwith("v"):
+        if pos.startswith("v"):
             return "VB"
-        if pos.startwith("a"):
+        if pos.startswith("a"):
             return "JJ"
-        if pos.startwith("r"):
+        if pos.startswith("r"):
             return "RB"
-        if pos.startwith("s") or pos.startswith("cs"):
+        if pos.startswith("s") or pos.startswith("cs"):
             return "IN"
-        if pos.startwith("c"):
+        if pos.startswith("c"):
             return "CC"
         return ""
     if len(pos) > 2:
