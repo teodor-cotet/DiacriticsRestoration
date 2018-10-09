@@ -13,7 +13,7 @@ import re
 models = {
     'en': 'en_coref_sm',
     'nl': 'nl',
-    'fr': 'fr',
+    'fr': 'fr_core_news_md',
     'es': 'es',
     'de': 'de',
     'it': 'it',
@@ -31,24 +31,54 @@ normalization = {
 }
 
 def convertToPenn(pos: str, lang: str) -> str:
-    if lang != 'ro':
-        if len(pos) > 2:
-            return pos[:2]
-        return pos
-    pos = pos.lower()
-    if pos.startswith("n"):
-        return "NN"
-    if pos.startwith("v"):
-        return "VB"
-    if pos.startwith("a"):
-        return "JJ"
-    if pos.startwith("r"):
-        return "RB"
-    if pos.startwith("s") or pos.startswith("cs"):
-        return "IN"
-    if pos.startwith("c"):
-        return "CC"
-    return ""
+    if lang == 'fr':
+        pos = pos.lower()
+        if pos.startswith('noun') or pos.startswith('propn'):
+            return "NN"
+        if pos.startwith("verb"):
+            return "VB"
+        if pos.startwith("adj"):
+            return "JJ"
+        if pos.startwith("adv"):
+            return "RB"
+        if pos.startwith("adp"):
+            return "IN"
+        if pos.startwith("cconj"):
+            return "CC"
+        return ""
+    if lang == 'nl':
+        pos = pos.lower()
+        if pos.startswith('n_') or pos.startswith('n|') or pos.startswith('propn'):
+            return "NN"
+        if pos.startwith("v_") or pos.startwith("v|"):
+            return "VB"
+        if pos.startwith("adj"):
+            return "JJ"
+        if pos.startwith("adv"):
+            return "RB"
+        if pos.startwith("adp"):
+            return "IN"
+        if pos.startwith("cconj") or pos.startwith("conj"):
+            return "CC"
+        return ""
+    if lang == 'ro':
+        pos = pos.lower()
+        if pos.startswith("n"):
+            return "NN"
+        if pos.startwith("v"):
+            return "VB"
+        if pos.startwith("a"):
+            return "JJ"
+        if pos.startwith("r"):
+            return "RB"
+        if pos.startwith("s") or pos.startswith("cs"):
+            return "IN"
+        if pos.startwith("c"):
+            return "CC"
+        return ""
+    if len(pos) > 2:
+        return pos[:2]
+    return pos
     
 
 class SpacyParser:
@@ -158,7 +188,8 @@ if __name__ == "__main__":
 
     # print(spacyInstance.get_ner(sent))
     # print(spacyInstance.get_tokens_lemmas(sent))
-    doc = spacyInstance.parse("My sister has a dog. She loves him.", 'en')
-    print(doc._.has_coref)
-    print(doc._.coref_clusters)
+    # doc = spacyInstance.parse("My sister has a dog. She loves him.", 'en')
+    doc = spacyInstance.parse("Pensée des enseignants, production d’écrits, ingénierie éducative, enseignement à distance, traitement automatique de la langue, outils cognitifs, feedback automatique", 'fr')
+    for token in doc:
+        print(convertToPenn(token.tag_, 'fr'))   
     # print(spacyInstance.preprocess("coborî", 'ro'))
