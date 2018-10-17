@@ -28,7 +28,6 @@ def create_spacy_doc():
 
 @app.route('/isalive', methods=['GET'])
 def check_connection():
-    doc = spacyInstance.process(request.json['doc'])
     response = jsonify("alive")
     return response, 200
 
