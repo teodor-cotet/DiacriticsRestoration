@@ -11,7 +11,7 @@ import re
 # }
 
 models = {
-    'en': 'en_coref_sm',
+    'en': 'en_coref_lg',
     'nl': 'nl',
     'fr': 'fr_core_news_md',
     'es': 'es',
