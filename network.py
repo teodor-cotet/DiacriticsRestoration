@@ -7,6 +7,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 import numpy as np
+import json
 
 nlp = spacy.load('nl')
 
@@ -26,24 +27,36 @@ def read_rb_results(folder: str, sim_type: str) -> List:
                 result.append((text, answer, float(line[8 + i]), 1 if target == i else 0))
     return result
 
+def read_sscm(folder: str) -> List:
+    with open(join(folder, "SSCM.json"), "rt", encoding='utf-8') as f:
+        return [option["sscmeScore"] for entry in json.load(f) for option in entry["options"]]
+
 def build_dataset(folder: str, shuffle: bool = True) -> tf.data.Dataset:
     types = ["leacock", "path", "wu", "word2vec"]
     scores = [read_rb_results(folder, sim_type) for sim_type in types]
     kernels = [PresenceStringKernel, IntersectionStringKernel, SpectrumStringKernel]
     x = []
     y = []
-    for s1, s2, s3, s4 in zip(scores[0], scores[1], scores[2], scores[3]):
+    for rb_scores in zip(*scores):
+        text1 = rb_scores[0][0]
+        text2 = rb_scores[0][1]
+        target = rb_scores[0][3]
         sk_scores = [kernel.compute_kernel_string_listofstrings(
-                s1[0], 
-                [s1[1]], 
+                text1, 
+                [text2], 
                 size, size + 1, normalize=True)[0]
             for kernel in kernels
             for size in range(2, 11, 2)]
-        a = nlp(s1[0])
-        b = nlp(s1[1])
-        sk_scores += [s1[2], s2[2], s3[2], s4[2], a.similarity(b)]
+        a = nlp(text1)
+        b = nlp(text2)
+        sk_scores += [score[2] for score in rb_scores]
+        sk_scores.append(a.similarity(b))
         x.append(sk_scores)
-        y.append(s1[3])
+        y.append(target)
+    sscm = read_sscm(folder)
+    print(len(x))
+    print(len(sscm))
+    x = [features + [score] for features, score in zip(x, sscm)]
     dataset = tf.data.Dataset.from_tensor_slices((x, y))
     dataset = dataset.repeat()
     if shuffle:
@@ -101,7 +114,7 @@ if __name__ == "__main__":
     train_len = steps(train_len, BATCH_SIZE)
     dev_len = steps(dev_len, BATCH_SIZE)
     model = build_model()
-    EPOCHS = 39
+    EPOCHS = 50
     BATCH_SIZE = 32
     # tf.logging.set_verbosity(tf.logging.INFO)
     for epoch in range(1, EPOCHS + 1):
