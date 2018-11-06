@@ -25,19 +25,19 @@ folder_saved_models = "saved_models/"
 fast_text = "fastText/wiki.ro"
 
 window_sentence = 15 
-window_character = 6 # 2 * x + 1
+window_character = 15 # 2 * x + 1
 
-character_embedding_size = 20
+character_embedding_size = 28
 word_embedding_size = 300
 
 
 characters_cell_size = 64
 sentence_cell_size = 300
 neurons_dense_layer_after_merge = 512
-batch_size = 4096
+batch_size = 128
 limit_backtracking_characters = 10
 
-CPUS = 7
+CPUS = 2
 size_prefetch_buffer = 10
 max_unicode_allowed = 770
 replace_character = 255
@@ -66,8 +66,33 @@ map_no_diac = {
 	'ș': 's',
 	'Ș': 'S',
 	'î': 'i',
-	'Î': 'I'
+	'Î': 'I',
+	"ş": "ș",
+	"Ş": "Ș",
+	"ţ": "ț",
+	"Ţ": "Ț",
 }
+all_in = {
+	'ă','â','a',
+	'Ă','Â','A',	
+	'ț',
+	'Ț',
+	'ș',
+	'Ș',
+	'î',
+	'Î',
+	'i', 
+	't',
+	's',
+	"ş",
+	"Ş",
+	"ţ",
+	"Ţ",
+	'S',
+	'T',
+	'I'
+}
+
 map_correct_diac = {
 	"ş": "ș",
 	"Ş": "Ș",
@@ -273,14 +298,25 @@ def count_chars_in_interest(s):
 			chars_in_int.append(character_c)
 	return cnt_chars, chars_in_int
 
+def get_word_around_index(original_text_utf, index_text):
+	s = []
+	i = index_text
+	while i >= 0 and original_text_utf[i].isalpha():
+		i -= 1
+	i += 1
+	while i < len(original_text_utf) and original_text_utf[i].isalpha():
+		s.append(original_text_utf[i])
+		i += 1
+	return "".join(s)
+
 def create_examples(original_text, is_test_dataset):
 	drop_example = False
 
 	try:
 		original_text_utf = original_text.decode('utf-8')
-		original_text_utf = "".join([replace_char_original(c) for c in original_text_utf])
+		first_clean_text_utf = "".join([replace_char_original(c) for c in original_text_utf])
 		# replace some strange characters which are modified by tokenization
-		clean_text_utf = "".join([replace_char(c) for c in original_text_utf])
+		clean_text_utf = "".join([replace_char(c) for c in first_clean_text_utf])
 		clean_sentences = nltk.sent_tokenize(clean_text_utf)
 		clean_tokens = []
 
@@ -296,12 +332,15 @@ def create_examples(original_text, is_test_dataset):
 
 		# input and output lists
 		clean_words = []
+		original_words = []
 		window_characters = []
 		word_embeddings = []
 		sentence_embeddings = []
 		labels = []
+
 		while index_sent < len(clean_tokens):
 			clean_token = clean_tokens[index_sent][index_token]
+			original_word = get_word_around_index(original_text_utf, index_text)
 			i = 0		
 			while i < len(clean_token):
 
@@ -314,6 +353,8 @@ def create_examples(original_text, is_test_dataset):
 					index_last_sent = index_sent
 					if is_test_dataset == True:
 						clean_words.append(clean_token)
+						original_words.append(original_word)
+
 					window_characters.append(win_char)
 					word_embeddings.append(word_emb)
 					# sentence already computed
@@ -336,6 +377,7 @@ def create_examples(original_text, is_test_dataset):
 			else:
 				index_token += 1
 	except:
+		print('dropeds')
 		drop_example = True
 			
 			
@@ -353,7 +395,7 @@ def create_examples(original_text, is_test_dataset):
 	if is_test_dataset == False:
 		return (window_characters, word_embeddings, sentence_embeddings, labels)
 	else:
-		return (clean_words, window_characters, word_embeddings, sentence_embeddings, labels)
+		return (clean_words, window_characters, word_embeddings, sentence_embeddings, labels, original_words)
 
 def filter_null_strings(s):
 	if len(s) == 0:
@@ -363,21 +405,26 @@ def filter_null_strings(s):
 def flat_map_f(a, b):
 	return tf.data.Dataset.from_tensor_slices((a, b))
 
-def get_dataset(dpath, sess, is_test_dataset=False):
+def get_dataset(dpath, sess, is_test_dataset=False, restore=False):
 
-	input_files = tf.gfile.ListDirectory(dpath)
-	
-	for i in range(len(input_files)):			
-		if args.corpus_rowiki == False and input_files[i].count('rowiki') > 0:
-			input_files.remove(input_files[i])
-			break
-	
-	for i in range(len(input_files)):
-		input_files[i] = dpath + input_files[i]
+	if restore == False:
+		input_files = tf.gfile.ListDirectory(dpath)
+		for i in range(len(input_files)):			
+			if args.corpus_rowiki == False and input_files[i].count('rowiki') > 0:
+				input_files.remove(input_files[i])
+				break
+		
+		for i in range(len(input_files)):
+			input_files[i] = dpath + input_files[i]
+	else:
+		input_files = [dpath]
 
 	dataset = tf.data.TextLineDataset(input_files)
+	dataset = dataset.filter(lambda x:
+	 (tf.py_func(filter_null_strings, [x], tf.bool, stateful=False))[0])
+
 	if is_test_dataset == True:
-		datatype_returned = (tf.string, tf.int32, tf.float32, tf.float32, tf.float32)
+		datatype_returned = (tf.string, tf.int32, tf.float32, tf.float32, tf.float32, tf.string)
 	else:
 		datatype_returned = (tf.int32, tf.float32, tf.float32, tf.float32)
 
@@ -388,8 +435,8 @@ def get_dataset(dpath, sess, is_test_dataset=False):
 					stateful=False),\
 		num_parallel_calls=CPUS)
 	if is_test_dataset == True:
-		dataset = dataset.map(lambda x1, x2, x3, x4, y:\
-								((x1, x2, x3, x4), y),\
+		dataset = dataset.map(lambda x1, x2, x3, x4, y1, y2:\
+								((x1, x2, x3, x4), (y1, y2)),\
 								num_parallel_calls=CPUS)
 	else:
 		dataset = dataset.map(lambda x1, x2, x3, y:\
@@ -399,13 +446,14 @@ def get_dataset(dpath, sess, is_test_dataset=False):
 	
 	# do not shuffle or batch test dataset
 	if is_test_dataset == True:
-		dataset = dataset.batch(batch_size, drop_remainder=True)
+		dataset = dataset.batch(1, drop_remainder=True)
 	else:
 		dataset = dataset.shuffle(args.buffer_size_shuffle)
 		dataset = dataset.batch(batch_size)
 		dataset = dataset.prefetch(size_prefetch_buffer)
 
 	return dataset
+
 def get_charr(simple_c, case):
 
 	if simple_c == 'a':
@@ -433,6 +481,7 @@ def get_charr(simple_c, case):
 		elif case == 2:
 			return 's'
 	return 'a'
+
 def compute_prediction(correct_case, predicted_case, simple_c, precision_chars, recall_chars):
 	correct_char = get_charr(simple_c, correct_case)
 	pred_char = get_charr(simple_c, predicted_case)
@@ -443,6 +492,116 @@ def compute_prediction(correct_case, predicted_case, simple_c, precision_chars, 
 		precision_chars[correct_char][0] += 1
 	precision_chars[pred_char][1] += 1
 	recall_chars[correct_char][1] += 1
+
+def get_next_possible(all_txt, index_full_text):
+	while True:
+		index_full_text += 1
+		if all_txt[index_full_text] in all_in:
+			return index_full_text
+
+def restore_char(pred_char, original_char, original_word):
+	
+	# don't modify char if already there
+	if original_char in map_no_diac:
+		return original_char
+	# don't modify the word if is only uppercase letters
+	elif original_word.isupper():
+		return original_char
+	elif original_char.isupper():
+		return pred_char.upper()
+	return pred_char
+
+def restore_diacritics(sess, model):
+	# restoration works by going with 2 indeces (current_prediction and index_full_text)
+	# in tensorflow predictions and full text and modifying in the full text with the prediction
+	# this will work only if in create examples there are NO examples droped, so
+	# the original text matches that processed by tensorflow
+	# ideas for making it more robust??
+
+	txt_file = args.restore_diacritics
+	all_txt = []
+	
+	with open(txt_file, 'r') as f:
+		for line in f:
+			all_txt.append(list(line))
+
+	all_txt = sum(all_txt, [])
+	all_txt_chars = 0
+
+	for c in all_txt:
+		if c in all_in:
+			all_txt_chars += 1
+	
+	# get nr of predictions
+	dt_test = get_dataset(txt_file, sess, True, True)
+	nr_predictions = 0
+	iterator_test = dt_test.make_initializable_iterator()
+	sess.run(iterator_test.initializer)
+	test_next_element = iterator_test.get_next()
+
+	try:
+		while True:
+			sess.run(test_next_element)
+			nr_predictions += 1
+	except:
+		print('nr predictions: {} all txt cnt: {}'.format(nr_predictions, all_txt_chars))
+	
+	sess.run(iterator_test.initializer)
+	test_inp_pred, _ = iterator_test.get_next()
+	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred = test_inp_pred
+	input_list = get_input_list(test_char_window_pred, test_words_pred, test_sentence_pred)
+	
+	predictions = model.predict(x=input_list,
+				  verbose=1,
+				  steps=nr_predictions)
+	sess.run(iterator_test.initializer)
+	test_next_element = iterator_test.get_next()
+	
+	current_prediction = 0
+	index_full_text = -1
+
+	while True:
+		try:
+			test_inp, test_out = sess.run(test_next_element)
+			test_string_word, _, _, _ = test_inp
+			current_prediction += 1
+
+			word = test_string_word[0]
+			original_word = test_out[1][0]
+
+			#print(word, original_word)
+			nr_chars_in_word, list_chars_in_word = count_chars_in_interest(word)
+			correct_prediction_word = True
+			for i in range(nr_chars_in_word):
+				pred_vector = predictions[current_prediction - 1]
+				predicted_case = get_case(pred_vector)
+				correct_case = get_case(test_out[0][0])
+				
+				#print(predicted_case, correct_case)
+				pred_char = get_charr(list_chars_in_word[i], predicted_case)
+				correct_char = get_charr(list_chars_in_word[i], correct_case)
+
+				index_full_text = get_next_possible(all_txt, index_full_text)
+				res_char = restore_char(pred_char, all_txt[index_full_text], original_word)
+				#print(res_char, correct_char)
+				all_txt[index_full_text] = res_char
+
+				if current_prediction == nr_predictions:
+					break
+
+				# if not end of the word yet
+				if i < nr_chars_in_word - 1:
+					_, test_out = sess.run(test_next_element)
+					current_prediction += 1
+			
+			if current_prediction == nr_predictions or current_prediction == all_txt_chars:
+				break
+
+		except tf.errors.OutOfRangeError:
+			break
+	res = "".join(all_txt)
+	with open('tmp_res.txt', 'w') as f:
+		f.write(res)
 	
 def compute_test_accuracy(sess, model):
 	dt_test = get_dataset(test_files, sess, True)
@@ -451,10 +610,10 @@ def compute_test_accuracy(sess, model):
 	sess.run(iterator_test.initializer)
 	nr_test_batches = args.number_samples_test
 
-	test_inp_pred, test_out_pred = iterator_test.get_next()
+	test_inp_pred, _ = iterator_test.get_next()
 	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred = test_inp_pred
-	#  test_words_pred, test_sentence_pred],\
-	predictions = model.predict(x=test_char_window_pred,
+	#  ,\
+	predictions = model.predict(x=[test_char_window_pred, test_words_pred, test_sentence_pred],
 				  verbose=1,
 				  steps=nr_test_batches)
 	print(len(predictions))
@@ -497,7 +656,7 @@ def compute_test_accuracy(sess, model):
 				for i in range(nr_chars_in_word):
 					pred_vector = predictions[prediction_index]
 					predicted_case = get_case(pred_vector)
-					correct_case = get_case(test_out[index_batch])
+					correct_case = get_case(test_out[index_batch][0])
 					index_batch += 1
 					prediction_index += 1
 
@@ -578,6 +737,7 @@ def set_up_folders_saved_models():
 			exit(0)
 
 def parse_args():
+	# when specify -load, specify also the nr of classes, if the model uses chars, words, sent
 	global args
 	parser = argparse.ArgumentParser(description='Run diacritics model')
 	parser.add_argument('-s', dest="save_model", action='store_false', default=True,\
@@ -631,14 +791,34 @@ def parse_args():
 	parser.add_argument('-sent', dest="use_sentence_embedding",\
 						action='store_false', default=True,\
 						help="if model should use sentence embedding, default=True")
-	parser.add_argument('-hidden', dest="hidden_neurons", required=True,\
+	parser.add_argument('-hidden', dest="hidden_neurons",\
 						action='append', type=int,\
 						help="number of neurons on the hidden layer, no default")
 	parser.add_argument('-classes', dest="nr_classes", default=4,\
 						action='store', type=int,\
 						help="number of classes to be used (4 or 5), default=4")
+	parser.add_argument('-restore', dest="restore_diacritics", 
+						action='store', default=None,\
+						help="name of the file to restore diacritics")
 	args = parser.parse_args()
 	args.folder_saved_model_per_epoch += '/'
+
+	
+	if args.restore_diacritics is not None:
+		# by default use the best model
+		if args.load_model_name is None:
+			#args.load_model_name = "5-all-256-12100
+			args.load_model_name = "only_chars_win31_256_64_55"
+			args.use_window_characters = True
+			args.use_word_embedding = False
+			args.use_sentence_embedding = False
+			args.nr_classes = 5
+			args.use_dummy_word_embeddings = True
+		args.save_model = False
+		args.do_test = False
+		args.buffer_size_shuffle = 100
+		args.run_train_validation = False
+
 	if args.load_model_name is not None:
 		args.load_model_name += '/'
 
@@ -782,8 +962,9 @@ if __name__ == "__main__":
 					train_char_window, train_words, train_sentence = train_inp
 				
 				# train an epoch
+				#train_words, train_sentence],\
 				model.fit(\
-					[train_char_window, train_words, train_sentence],\
+					train_char_window,\
 					[train_out],\
 					steps_per_epoch=inp_batches_train//args.reset_iterators_every_epochs,\
 					epochs=1,\
@@ -796,7 +977,8 @@ if __name__ == "__main__":
 							'epoch_' + str(i) + '.h5'
 					model.save(full_path_epoch_weights)
 				# validate 
-				[valid_loss, valid_acc] = model.evaluate([valid_char_window, valid_words, valid_sentence],\
+				# valid_words, valid_sentence],
+				[valid_loss, valid_acc] = model.evaluate(valid_char_window,\
 											valid_out,\
 											verbose=1,\
 											steps=inp_batches_valid//args.reset_iterators_every_epochs)
@@ -804,3 +986,5 @@ if __name__ == "__main__":
 		# test
 		if args.do_test:
 			compute_test_accuracy(sess, model)
+		if args.restore_diacritics:
+			restore_diacritics(sess, model)
