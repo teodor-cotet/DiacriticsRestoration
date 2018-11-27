@@ -92,3 +92,4 @@ ENV/
 
 # Angular
 node_modules
+dist
