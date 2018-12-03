@@ -4,8 +4,8 @@ import csv
 import spacy
 from readerbench.core.StringKernels import PresenceStringKernel, IntersectionStringKernel, SpectrumStringKernel
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Dense, Input, Lambda
 import numpy as np
 import json
 
@@ -29,9 +29,9 @@ def read_rb_results(folder: str, sim_type: str) -> List:
 
 def read_sscm(folder: str) -> List:
     with open(join(folder, "SSCM.json"), "rt", encoding='utf-8') as f:
-        return [option["sscmeScore"] for entry in json.load(f) for option in entry["options"]]
+        return [(entry["input"]["text"], option["text"], option["sscmeScore"]) for entry in json.load(f) for option in entry["options"]]
 
-def build_dataset(folder: str, shuffle: bool = True) -> tf.data.Dataset:
+def build_dataset(folder: str, train: bool = True) -> tf.data.Dataset:
     types = ["leacock", "path", "wu", "word2vec"]
     scores = [read_rb_results(folder, sim_type) for sim_type in types]
     kernels = [PresenceStringKernel, IntersectionStringKernel, SpectrumStringKernel]
@@ -53,30 +53,45 @@ def build_dataset(folder: str, shuffle: bool = True) -> tf.data.Dataset:
         sk_scores.append(a.similarity(b))
         x.append(sk_scores)
         y.append(target)
-    sscm = read_sscm(folder)
-    print(len(x))
-    print(len(sscm))
+    sscm = [score for answer, option, score  in read_sscm(folder)]
     x = [features + [score] for features, score in zip(x, sscm)]
-    dataset = tf.data.Dataset.from_tensor_slices((x, y))
-    dataset = dataset.repeat()
-    if shuffle:
+    if train:
+        positive = tf.data.Dataset.from_tensor_slices([features for features, target in zip(x, y) if target == 1])
+        negative = tf.data.Dataset.from_tensor_slices([features for features, target in zip(x, y) if target == 0])
+        target = tf.data.Dataset.from_tensor_slices([[1]]).repeat()
+        positive = positive.repeat()
+        positive = positive.shuffle(1024)
+        dataset = tf.data.Dataset.zip((positive, negative, target))
+        dataset = dataset.repeat()
         dataset = dataset.shuffle(1024)
-    dataset = dataset.batch(BATCH_SIZE)
+        dataset = dataset.batch(BATCH_SIZE)
+    else:
+        instances = tf.data.Dataset.from_tensor_slices(x)
+        dummy = tf.data.Dataset.from_tensor_slices(x)
+        target = tf.data.Dataset.from_tensor_slices([[val] for val in y])
+        dataset = tf.data.Dataset.zip((instances, dummy, target))
+        dataset = dataset.batch(BATCH_SIZE)
+        dataset = dataset.repeat()
     return dataset
 
-def weighted_loss(y_true, y_pred):
-    class_weights = tf.constant([1, 8], dtype=tf.float32)
-    weights = tf.nn.embedding_lookup(class_weights, y_true)
-    loss = tf.square(tf.to_float(y_true) - y_pred)
-    return tf.reduce_mean(loss * weights)
+def hinge(y_true, y_pred):
+    
+    return tf.reduce_mean(tf.maximum(0., 0.5 - y_pred))
 
 def build_model() -> tf.keras.Model:
-    model = Sequential()
-    model.add(Dense(8, activation='tanh'))
-    model.add(Dense(1, activation='sigmoid'))
+    pos_input = Input((21,))
+    neg_input = Input((21,))
+    seq = Sequential()
+    seq.add(Dense(8, activation='tanh'))
+    seq.add(Dense(1, activation='sigmoid'))
+    pos_score = seq(pos_input)
+    neg_score = seq(neg_input)
+    diff = Lambda(lambda pair: pair[0] - pair[1], output_shape=(1,))((pos_score, neg_score))
+    model = Model(inputs=(pos_input, neg_input), outputs=(diff, pos_score))
+    
     model.compile(optimizer='adam',
-        loss=weighted_loss)
-        # metrics=['accuracy'])
+        loss={"lambda": hinge, "sequential": lambda x, y: tf.constant(0, dtype=tf.float32)},
+        metrics={"sequential": 'accuracy'})
     return model
     
 def print_results(folder: str, results: List):
@@ -105,26 +120,29 @@ if __name__ == "__main__":
     # tf.enable_eager_execution()
     train_folder = "resources/Second Experiment/training"
     dev_folder = "resources/Second Experiment/validation"
-    x_train, y_train = build_dataset(train_folder).make_one_shot_iterator().get_next()
-    x_dev, y_dev =  build_dataset(dev_folder, shuffle=False).make_one_shot_iterator().get_next()
-    train_len = len(read_rb_results("resources/Second Experiment/training", "leacock"))
-    dev_len = len(read_rb_results("resources/Second Experiment/validation", "leacock"))
+    pos_train, neg_train, y_train = build_dataset(train_folder, train=True).make_one_shot_iterator().get_next()
+    pos_dev, neg_dev, y_dev =  build_dataset(dev_folder, train=False).make_one_shot_iterator().get_next()
+    train_len = len([1 for inst in read_rb_results("resources/Second Experiment/training", "leacock") if inst[3] == 0])
+    dev_len = len([1 for inst in read_rb_results("resources/Second Experiment/validation", "leacock") if inst[3] == 0])
     print("Training examples: {}".format(train_len))
     print("Validation examples: {}".format(dev_len))
     train_len = steps(train_len, BATCH_SIZE)
     dev_len = steps(dev_len, BATCH_SIZE)
     model = build_model()
-    EPOCHS = 50
+    EPOCHS = 42
     BATCH_SIZE = 32
     # tf.logging.set_verbosity(tf.logging.INFO)
     for epoch in range(1, EPOCHS + 1):
         print("Epoch {}: ".format(epoch))
-        model.fit(x_train, y_train, steps_per_epoch = train_len, validation_data=(x_dev, y_dev), validation_steps=dev_len, )
+        model.fit([pos_train, neg_train], [y_train, y_train], steps_per_epoch = train_len, validation_data=([pos_dev, neg_dev], [y_dev, y_dev]), validation_steps=dev_len, )
         # print(estimator.evaluate(input_fn=training_input_fn(x_dev, y_dev, shuffle=False), steps=len(x_dev)//BATCH_SIZE))
-    predictions = model.predict(x_dev, steps=dev_len)
-    print_results(dev_folder, [pred[0] for pred in predictions])
-    x_train, y_train = build_dataset(train_folder, shuffle=False).make_one_shot_iterator().get_next()
+    train_len = steps(len(read_rb_results("resources/Second Experiment/training", "leacock")), BATCH_SIZE)
+    dev_len = steps(len(read_rb_results("resources/Second Experiment/validation", "leacock")), BATCH_SIZE)
     
-    predictions = model.predict(x_train, steps=train_len)
+    _, predictions = model.predict([pos_dev, neg_dev], steps=dev_len)
+    print_results(dev_folder, [pred[0] for pred in predictions])
+    pos_train, neg_train, y_train = build_dataset(train_folder, train=False).make_one_shot_iterator().get_next()
+    
+    _, predictions = model.predict([pos_train, neg_train], steps=train_len)
     print_results(train_folder, [pred[0] for pred in predictions])
     
