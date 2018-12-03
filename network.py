@@ -1,11 +1,9 @@
-from typing import List
+from typing import List, Tuple
 from os.path import join
 import csv
 import spacy
 from readerbench.core.StringKernels import PresenceStringKernel, IntersectionStringKernel, SpectrumStringKernel
 import tensorflow as tf
-from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import Dense, Input, Lambda
 import numpy as np
 import json
 
@@ -79,15 +77,15 @@ def hinge(y_true, y_pred):
     return tf.reduce_mean(tf.maximum(0., 0.5 - y_pred))
 
 def build_model() -> tf.keras.Model:
-    pos_input = Input((21,))
-    neg_input = Input((21,))
-    seq = Sequential()
-    seq.add(Dense(8, activation='tanh'))
-    seq.add(Dense(1, activation='sigmoid'))
+    pos_input = tf.keras.layers.Input((21,))
+    neg_input = tf.keras.layers.Input((21,))
+    seq = tf.keras.models.Sequential()
+    seq.add(tf.keras.layers.Dense(8, activation='tanh'))
+    seq.add(tf.keras.layers.Dense(1, activation='sigmoid'))
     pos_score = seq(pos_input)
     neg_score = seq(neg_input)
-    diff = Lambda(lambda pair: pair[0] - pair[1], output_shape=(1,))((pos_score, neg_score))
-    model = Model(inputs=(pos_input, neg_input), outputs=(diff, pos_score))
+    diff = tf.keras.layers.Lambda(lambda pair: pair[0] - pair[1], output_shape=(1,))((pos_score, neg_score))
+    model = tf.keras.models.Model(inputs=(pos_input, neg_input), outputs=(diff, pos_score))
     
     model.compile(optimizer='adam',
         loss={"lambda": hinge, "sequential": lambda x, y: tf.constant(0, dtype=tf.float32)},
@@ -115,34 +113,73 @@ def steps(count: int, batch: int) -> int:
     else:
         return count // batch + 1
 
+def compute_accuracy(folder: str, predictions: List[float], threshold: float = None) -> Tuple[float, float]:
+    with open(join(folder, "file-leacock.fix.csv"), mode="rt", encoding="utf-8") as f:
+        reader = csv.reader(f, delimiter=',', quotechar='"')
+        header = reader.__next__() # skip header
+        current = 0
+        total = 0
+        if threshold is None:
+            thresholds = [x / 100 for x in range(10, 90, 5)]
+            
+        else:
+            thresholds = [threshold]
+        correct = {t: 0 for t in thresholds}
+        for line in reader:
+            text = line[1]
+            options = [answer for answer in line[2:8] if len(answer) > 0]
+            values = predictions[current:(current + len(options))]
+            target = int(line[14]) - 1
+            for threshold in thresholds:
+                if max(values) < threshold:
+                    if target == -1:
+                        correct[threshold] += 1
+                else:
+                    if target == np.argmax(values):
+                        correct[threshold] += 1
+            total += 1
+            current += len(options)
+        max_correct = -1
+        max_threshold = -1
+        for threshold, number in correct.items():
+            if number > max_correct:
+                max_threshold = threshold
+                max_correct = number
+        return max_correct / total, max_threshold
 
 if __name__ == "__main__":
     # tf.enable_eager_execution()
     train_folder = "resources/Second Experiment/training"
     dev_folder = "resources/Second Experiment/validation"
     pos_train, neg_train, y_train = build_dataset(train_folder, train=True).make_one_shot_iterator().get_next()
+    pos_train_seq, neg_train_seq, y_train_seq = build_dataset(train_folder, train=False).make_one_shot_iterator().get_next()
     pos_dev, neg_dev, y_dev =  build_dataset(dev_folder, train=False).make_one_shot_iterator().get_next()
     train_len = len([1 for inst in read_rb_results("resources/Second Experiment/training", "leacock") if inst[3] == 0])
-    dev_len = len([1 for inst in read_rb_results("resources/Second Experiment/validation", "leacock") if inst[3] == 0])
-    print("Training examples: {}".format(train_len))
-    print("Validation examples: {}".format(dev_len))
+    # dev_len = len([1 for inst in read_rb_results("resources/Second Experiment/validation", "leacock") if inst[3] == 0])
+    # print("Training examples: {}".format(train_len))
+    # print("Validation examples: {}".format(dev_len))
     train_len = steps(train_len, BATCH_SIZE)
-    dev_len = steps(dev_len, BATCH_SIZE)
+    train_len_seq = steps(len(read_rb_results("resources/Second Experiment/training", "leacock")), BATCH_SIZE)
+    dev_len = steps(len(read_rb_results("resources/Second Experiment/validation", "leacock")), BATCH_SIZE)
     model = build_model()
     EPOCHS = 42
     BATCH_SIZE = 32
     # tf.logging.set_verbosity(tf.logging.INFO)
     for epoch in range(1, EPOCHS + 1):
         print("Epoch {}: ".format(epoch))
-        model.fit([pos_train, neg_train], [y_train, y_train], steps_per_epoch = train_len, validation_data=([pos_dev, neg_dev], [y_dev, y_dev]), validation_steps=dev_len, )
-        # print(estimator.evaluate(input_fn=training_input_fn(x_dev, y_dev, shuffle=False), steps=len(x_dev)//BATCH_SIZE))
-    train_len = steps(len(read_rb_results("resources/Second Experiment/training", "leacock")), BATCH_SIZE)
-    dev_len = steps(len(read_rb_results("resources/Second Experiment/validation", "leacock")), BATCH_SIZE)
+        model.fit([pos_train, neg_train], [y_train, y_train], steps_per_epoch = train_len)
+        _, predictions = model.predict([pos_train_seq, neg_train_seq], steps=train_len_seq)
+        train_accuracy, threshold = compute_accuracy(train_folder, [pred[0] for pred in predictions])
+        _, predictions = model.predict([pos_dev, neg_dev], steps=dev_len)
+        dev_accuracy, _ = compute_accuracy(dev_folder, [pred[0] for pred in predictions], threshold=threshold)
+        print("Accuracy after epoch {}: train: {}, dev: {}, threshold: {}\n".format(epoch, train_accuracy, dev_accuracy, threshold))
     
-    _, predictions = model.predict([pos_dev, neg_dev], steps=dev_len)
-    print_results(dev_folder, [pred[0] for pred in predictions])
-    pos_train, neg_train, y_train = build_dataset(train_folder, train=False).make_one_shot_iterator().get_next()
+    # train_len = steps(len(read_rb_results("resources/Second Experiment/training", "leacock")), BATCH_SIZE)
     
-    _, predictions = model.predict([pos_train, neg_train], steps=train_len)
-    print_results(train_folder, [pred[0] for pred in predictions])
+    # _, predictions = model.predict([pos_dev, neg_dev], steps=dev_len)
+    # print_results(dev_folder, [pred[0] for pred in predictions])
+    # pos_train, neg_train, y_train = build_dataset(train_folder, train=False).make_one_shot_iterator().get_next()
+    
+    # _, predictions = model.predict([pos_train, neg_train], steps=train_len)
+    # print_results(train_folder, [pred[0] for pred in predictions])
     

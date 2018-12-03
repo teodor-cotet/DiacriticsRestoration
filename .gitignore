@@ -128,10 +128,10 @@ npm-debug.log
 yarn-error.log
 testem.log
 /typings
-corpus
-spacy-src-old
-RO
-models 
+/corpus
+/spacy-src-old
+/RO
+/models 
 
 # System Files
 .DS_Store
