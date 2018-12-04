@@ -129,7 +129,7 @@ export class ClusteringComponent implements OnInit {
   errorToString(error: number) {
     switch (error) {
       case 1: return 'You should separate candidate options for this cluster!';
-      case 2: return 'Its reccomended to introduce a candidate option that covers this cluster!';
+      case 2: return 'Its recommended to introduce a candidate option that covers this cluster!';
       default: return '';
     }
   }
