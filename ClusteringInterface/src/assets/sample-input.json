@@ -8,5 +8,5 @@
     "answer1",
     "answer2"
   ],
-  "minPerCluster": 5
+  "minPerCluster": 2
 }

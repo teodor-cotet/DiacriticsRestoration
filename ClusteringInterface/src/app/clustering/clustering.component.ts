@@ -1,6 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ClusteringModel, Cluster } from './clustering.model';
 import { ClusterElementType } from './cluster-element-type.data';
+import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError, retry } from 'rxjs/operators';
+
 declare var require: any
 
 const ELEMENT_TYPE_CANDIDATE = 0;
@@ -13,27 +17,51 @@ const ELEMENT_TYPE_USER_ANSWER = 1;
 })
 export class ClusteringComponent implements OnInit {
 
+  public serverUrl: string = 'http://141.85.232.83:8080/clustering';
   public title: string;
   public description: string;
   loading: boolean;
   clustering: ClusteringModel;
   clusterErrors: string[];
   minAnswers: number;
+  public inputData: string;
 
-  constructor() { }
+  constructor(private http: HttpClient) { }
 
   ngOnInit() {
     this.title = 'Clustering';
     this.description = 'This page shows generated clusters using Natural Language Processing techniques. Each cluster may contain elements that might be either candidate options or user answers.'
     this.loading = true;
     this.minAnswers = 5;
-    var localClustering = this.loadDummyData();
-    this.clustering = new ClusteringModel(this.loadDummyData());
+    this.inputData = this.loadDummyInputData();
+    this.clustering = this.loadDummyData();
+    this.displayClusteringData();
+  }
+
+  loadDummyInputData() {
+    return JSON.stringify(require('../../assets/sample-input.json'));
+  }
+
+  loadDummyData() {
+    let data = require('../../assets/sample-output.json');
+    console.log(data);
+    return data;
+  }
+
+  parseData() {
+    this.sendData(this.inputData).subscribe(hero => function (response) {
+      console.log('Received response ', response);
+      this.clustering = response;
+    });
+  }
+
+  displayClusteringData() {
     for (var cluster in this.clustering) {
       console.log(cluster);
     }
     this.clusterErrors = new Array();
     var _this = this;
+    console.log(this.clustering);
     this.clustering.clusters.forEach(function (cluster, key) {
       var elements: any = cluster;
       var localCluster = new Cluster(elements);
@@ -45,10 +73,33 @@ export class ClusteringComponent implements OnInit {
     console.log(this.clustering);
   }
 
-  loadDummyData() {
-    let data = require('../../assets/sample-output.json');
-    console.log(data);
-    return data.clusters;
+  sendData(data): Observable<any> {
+    const httpOptions = {
+      headers: new HttpHeaders({
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      })
+    };
+    return this.http.post(this.serverUrl, data, httpOptions)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  handleError(error: HttpErrorResponse) {
+    if (error.error instanceof ErrorEvent) {
+      // A client-side or network error occurred. Handle it accordingly.
+      console.error('An error occurred:', error.error.message);
+    } else {
+      // The backend returned an unsuccessful response code.
+      // The response body may contain clues as to what went wrong,
+      console.error(
+        `Backend returned code ${error.status}, ` +
+        `body was: ${error.error}`);
+    }
+    // return an observable with a user-facing error message
+    return throwError(
+      'Something bad happened; please try again later.');
   }
 
   typeToString(type) {

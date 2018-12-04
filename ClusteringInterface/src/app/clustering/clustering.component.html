@@ -3,6 +3,16 @@
   <p class="lead">{{description}}</p>
 </div>
 <main role="main" class="container">
+  <form>
+    <div class="form-group">
+      <label for="inputData">Paste input data (JSON format):</label>
+      <textarea class="form-control" id="inputData" name="inputData" rows="10" [(ngModel)]="inputData" ></textarea>
+    </div>
+    <div class="text-center">
+      <button type="button" class="btn btn-primary" id="parseDataButton" (click)="parseData()">Parse data</button>
+      <button type="button" class="btn btn-secondary" id="resetFieldButton">Reset field</button>
+    </div>
+  </form>
   <div *ngIf="!loading">
     <div class="d-flex align-items-center p-3 my-3 text-white-50 bg-purple rounded shadow-sm">
       <!-- <img class="mr-3" src="../../assets/brand/bootstrap-outline.svg" alt="" width="48" height="48"> -->
