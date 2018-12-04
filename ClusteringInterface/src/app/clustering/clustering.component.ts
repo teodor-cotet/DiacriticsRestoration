@@ -34,8 +34,7 @@ export class ClusteringComponent implements OnInit {
     this.loading = true;
     this.minAnswers = 5;
     this.inputData = this.loadDummyInputData();
-    this.clustering = this.loadDummyData();
-    this.displayClusteringData();
+    // this.clustering = this.loadDummyData();
   }
 
   loadDummyInputData() {
@@ -49,9 +48,10 @@ export class ClusteringComponent implements OnInit {
   }
 
   parseData() {
-    this.sendData(this.inputData).subscribe(hero => function (response) {
+    this.sendData(this.inputData).subscribe(response => {
       console.log('Received response ', response);
       this.clustering = response;
+      this.displayClusteringData();
     });
   }
 
