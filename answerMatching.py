@@ -1,4 +1,5 @@
 from flask import Flask, request, abort, jsonify, render_template, flash, Response
+from flask_cors import CORS
 import spacy
 from spacy.tokens import Doc     
 from readerbench.core.StringKernels import SpectrumStringKernel, IntersectionStringKernel, PresenceStringKernel
@@ -9,6 +10,7 @@ from sklearn.cluster import AffinityPropagation
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config['SECRET_KEY'] = '7d441f27d441f27123d441f2b6176a'
+CORS(app)
 
 nlp = spacy.load('nl')
 
@@ -54,25 +56,28 @@ def match_response():
   
     return response, 200
 
-@app.route('/clustering', methods=['POST'])
+@app.route('/clustering', methods=['POST', 'OPTIONS'])
 def cluster_answers():
-    candidates = request.json['candidates']
-    answers = request.json['answers']
-    minPerCluster = request.json['minPerCluster']
-    docs = [nlp(candidate) for candidate in candidates + answers]
-    matrix = [[similarity(doc1, doc2) for doc2 in docs] for doc1 in docs]
-    clustering = AffinityPropagation(affinity='precomputed')
-    clustering.fit(matrix)
-    result = {}
-    for index, cluster in enumerate(clustering.labels_):
-        if cluster not in result:
-            result[cluster] = []
-        if index < len(candidates):
-            result[cluster].append({'text': docs[index].text, 'type': 0})
-        else:
-            result[cluster].append({'text': docs[index].text, 'type': 1})
-        
-    response = jsonify({"clusters": [cluster for idx, cluster in result.items()]})
+    if request.method == "POST":
+        candidates = request.json['candidates']
+        answers = request.json['answers']
+        minPerCluster = request.json['minPerCluster']
+        docs = [nlp(candidate) for candidate in candidates + answers]
+        matrix = [[similarity(doc1, doc2) for doc2 in docs] for doc1 in docs]
+        clustering = AffinityPropagation(affinity='precomputed')
+        clustering.fit(matrix)
+        result = {}
+        for index, cluster in enumerate(clustering.labels_):
+            if cluster not in result:
+                result[cluster] = []
+            if index < len(candidates):
+                result[cluster].append({'text': docs[index].text, 'type': 0})
+            else:
+                result[cluster].append({'text': docs[index].text, 'type': 1})
+            
+        response = jsonify({"clusters": [cluster for idx, cluster in result.items()]})
+    else:
+        response = Response()
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
