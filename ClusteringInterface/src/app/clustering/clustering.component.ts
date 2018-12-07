@@ -5,7 +5,7 @@ import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http
 import { Observable, throwError } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
 
-declare var require: any
+declare var require: any;
 
 const ELEMENT_TYPE_CANDIDATE = 0;
 const ELEMENT_TYPE_USER_ANSWER = 1;
@@ -17,22 +17,23 @@ const ELEMENT_TYPE_USER_ANSWER = 1;
 })
 export class ClusteringComponent implements OnInit {
 
-  public serverUrl: string = 'http://141.85.232.83:8080/clustering';
+  public serverUrl = 'http://141.85.232.83:8080/clustering';
   public title: string;
   public description: string;
   loading: boolean;
   clustering: ClusteringModel;
   clusterErrors: string[];
-  minAnswers: number;
+  minElementsPerCluster: number;
   public inputData: string;
 
   constructor(private http: HttpClient) { }
 
   ngOnInit() {
     this.title = 'Clustering';
-    this.description = 'This page shows generated clusters using Natural Language Processing techniques. Each cluster may contain elements that might be either candidate options or user answers.'
-    this.loading = true;
-    this.minAnswers = 5;
+    this.description = 'This page shows generated clusters using Natural Language Processing techniques. ' +
+      'Each cluster may contain elements that might be either candidate options or user answers.';
+    this.loading = false;
+    this.minElementsPerCluster = 5;
     this.inputData = this.loadDummyInputData();
     // this.clustering = this.loadDummyData();
   }
@@ -42,12 +43,17 @@ export class ClusteringComponent implements OnInit {
   }
 
   loadDummyData() {
-    let data = require('../../assets/sample-output.json');
+    const data = require('../../assets/sample-output.json');
     console.log(data);
     return data;
   }
 
+  resetInputField() {
+    this.inputData = '';
+  }
+
   parseData() {
+    this.minElementsPerCluster = JSON.parse(this.inputData).minPerCluster;
     this.sendData(this.inputData).subscribe(response => {
       console.log('Received response ', response);
       this.clustering = response;
@@ -56,20 +62,25 @@ export class ClusteringComponent implements OnInit {
   }
 
   displayClusteringData() {
-    for (var cluster in this.clustering) {
-      console.log(cluster);
+    console.log();
+    for (const cluster in this.clustering) {
+      if (true) {
+        console.log(cluster);
+      }
     }
     this.clusterErrors = new Array();
-    var _this = this;
+    const _this = this;
     console.log(this.clustering);
     this.clustering.clusters.forEach(function (cluster, key) {
-      var elements: any = cluster;
-      var localCluster = new Cluster(elements);
-      var errorCode = _this.errorCode(localCluster, _this.minAnswers);
+      const elements: any = cluster;
+      const localCluster = new Cluster(elements);
+      const errorCode = _this.errorCode(localCluster, _this.minElementsPerCluster);
       console.log('Error code ' + errorCode);
       _this.clusterErrors[key] = _this.errorToString(errorCode);
     });
-    if (this.clustering.clusters.length > 0) this.loading = false;
+    if (this.clustering.clusters.length > 0) {
+      this.loading = false;
+    }
     console.log(this.clustering);
   }
 
@@ -107,22 +118,29 @@ export class ClusteringComponent implements OnInit {
   }
 
   errorCode(cluster: Cluster, minAnswers: number = 0) {
-    var noCandidates = 0;
-    var noAnswers = 0;
+    let noCandidates = 0;
+    let noAnswers = 0;
     console.log(cluster);
-    var errorType = 0;
+    let errorType = 0;
     cluster.elements.forEach(function (element) {
       console.log('Element ', element);
-      if (element.type == ELEMENT_TYPE_CANDIDATE) noCandidates++;
-      else noAnswers++;
+      if (element.type === ELEMENT_TYPE_CANDIDATE) {
+        noCandidates++;
+      } else {
+        noAnswers++;
+      }
       console.log(noAnswers);
       if (noCandidates >= 2) {
         errorType = 1;
         return;
       }
     });
-    if (errorType != 0) return errorType;
-    if (noCandidates == 0 && noAnswers <= minAnswers) return 2;
+    if (errorType !== 0) {
+      return errorType;
+    }
+    if (noCandidates === 0 && noAnswers > minAnswers) {
+      return 2;
+    }
     return 0;
   }
 

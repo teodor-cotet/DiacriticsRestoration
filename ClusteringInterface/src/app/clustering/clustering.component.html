@@ -6,16 +6,18 @@
   <form>
     <div class="form-group">
       <label for="inputData">Paste input data (JSON format):</label>
-      <textarea class="form-control" id="inputData" name="inputData" rows="10" [(ngModel)]="inputData" ></textarea>
+      <textarea class="form-control" id="inputData" name="inputData" rows="10" [(ngModel)]="inputData"></textarea>
     </div>
-    <div class="text-center">
+    <div class="text-center" *ngIf="!loading">
       <button type="button" class="btn btn-primary" id="parseDataButton" (click)="parseData()">Parse data</button>
-      <button type="button" class="btn btn-secondary" id="resetFieldButton">Reset field</button>
+      <button type="button" class="btn btn-secondary" id="resetFieldButton" (click)="resetInputField()">Reset field</button>
+    </div>
+    <div class="text-center" *ngIf="loading">
+      Loading...
     </div>
   </form>
   <div *ngIf="!loading">
     <div class="d-flex align-items-center p-3 my-3 text-white-50 bg-purple rounded shadow-sm">
-      <!-- <img class="mr-3" src="../../assets/brand/bootstrap-outline.svg" alt="" width="48" height="48"> -->
       <div class="lh-100">
         <h6 class="mb-0 text-white lh-100">Generated Clusters</h6>
         <small>{{clustering.clusters.length}} clusters</small>
