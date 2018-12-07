@@ -1,0 +1,2867 @@
+[
+  {
+    "playthroughRID": 1047763908,
+    "input": {
+      "text": "We hebben net een standup meeting gehad. Dat hadden we de vorige keer afgesproken"
+    },
+    "options": [
+      {
+        "text": "Hoi, je hebt net de daily standup gemist. Kan gebeuren natuurlijk, maar merk wel dat je wat vaker moeite hebt om hier op tijd te zijn toch?"
+      },
+      {
+        "text": "Hallo, wij hebben net de daily stand-up gehad. Waarom was jij er niet?"
+      },
+      {
+        "text": "Wij hebben net de daily stand-up gehad maar maakt niet uit. Ik heb soms ook moeite om vroeg wakker te worden. "
+      },
+      {
+        "text": "Jij bent er nooit op tijd en werkt slordig!"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 1047763908,
+    "input": {
+      "text": "Wat was de reden dat je er niet bij kon zijn?"
+    },
+    "options": [
+      {
+        "text": "Dat had je wel geweten als je bij de afgelopen algemene team-meeting aanwezig was."
+      },
+      {
+        "text": "Wij hebben afgesproken in de afgelopen algemene team-meeting om dagelijks een stand-up te houden om 10u. "
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1047763908,
+    "input": {
+      "text": "Dat is goed. Hoe ging het met het werk dat je moest doen?"
+    },
+    "options": [
+      {
+        "text": "Heb jij integratietesten gedraaid voor het pushen van je code?"
+      },
+      {
+        "text": "Je werkt wat slordig. Wij moesten je code fixen want het werkte niet met andere componenten."
+      },
+      {
+        "text": "WIj hebben in de team-meeting afgesproken om eerst integratietesten te draaien en dan pas code te pushen naar de main branch."
+      },
+      {
+        "text": "Hoe vind je het gaan?"
+      }
+    ],
+    "playerMatch": 4,
+    "expertMatches": [
+      4,
+      null
+    ],
+    "goldenMatch": 4
+  },
+  {
+    "playthroughRID": 1047763908,
+    "input": {
+      "text": "Het was alleen niet helemaal goed gegaan met de code die je had gepushed. Check je de codestyle en test je de applicatie voordat je pushed?"
+    },
+    "options": [
+      {
+        "text": "Ik merkte dat de code die jij hebt gepusht niet werkte met andere componenten. Zo hadden we de opdrachtgever onze resultaten niet kunnen laten zien."
+      },
+      {
+        "text": "Wel goed dat de functionaliteit op tijd is. Punt is dat het team vanuit de main branch werkt en wij van daaruit een demo moeten laten zien, vandaar dat het altijd moet werken. "
+      },
+      {
+        "text": "Check je wel dat de software werkt als geheel voordat je het pusht naar de main branch?"
+      },
+      {
+        "text": "Goed om te horen dat het goed gaat. Het is even wennen denk ik."
+      }
+    ],
+    "playerMatch": 3,
+    "expertMatches": [
+      3,
+      3
+    ],
+    "goldenMatch": 3
+  },
+  {
+    "playthroughRID": 1047763908,
+    "input": {
+      "text": "Kan gebeuren, maar let er wel op, want we hebben hierdoor de functionaliteit niet kunnen laten zien aan de opdrachtgever"
+    },
+    "options": [
+      {
+        "text": "Ik vind het gezellig om in een team te werken. Jij ook?"
+      },
+      {
+        "text": "Hoe vind je het om in een groot, echt, project te werken, bijvoorbeeld met integratietesten en coding standaarden?"
+      },
+      {
+        "text": "Zie je de noodzaak van  coding standaarden en goede integratietesten?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1047763908,
+    "input": {
+      "text": "Zullen we samen nog is over jouw code gaan om te zien waar het fout ging?"
+    },
+    "options": [
+      {
+        "text": "Integratietesten zorgen er voor dat de software als geheel werkt. "
+      },
+      {
+        "text": "Zal ik je helpen met de komende sprint?"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 1047763908,
+    "input": {
+      "text": "Wanneer wil je afspreken om eraan te werken?"
+    },
+    "options": [
+      {
+        "text": "Even samen een feature programmeren? Zal ik ook je code reviewen vóór het pushen de volgende keer?"
+      },
+      {
+        "text": "Ik kan over je schouder meekijken en tips geven."
+      },
+      {
+        "text": "Zullen wij morgen afspreken, vroeg beginnen?"
+      },
+      {
+        "text": "Wat spreken we af?"
+      }
+    ],
+    "playerMatch": 4,
+    "expertMatches": [
+      4,
+      4
+    ],
+    "goldenMatch": 4
+  },
+  {
+    "playthroughRID": 1047763908,
+    "input": {
+      "text": "Is goed"
+    },
+    "options": [
+      {
+        "text": "Prima hoor"
+      },
+      {
+        "text": "Dat is goed"
+      },
+      {
+        "text": "Afgesproken"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 33856285,
+    "input": {
+      "text": "Er was een daily stand-up net."
+    },
+    "options": [
+      {
+        "text": "Hoi, je hebt net de daily standup gemist. Kan gebeuren natuurlijk, maar merk wel dat je wat vaker moeite hebt om hier op tijd te zijn toch?"
+      },
+      {
+        "text": "Hallo, wij hebben net de daily stand-up gehad. Waarom was jij er niet?"
+      },
+      {
+        "text": "Wij hebben net de daily stand-up gehad maar maakt niet uit. Ik heb soms ook moeite om vroeg wakker te worden. "
+      },
+      {
+        "text": "Jij bent er nooit op tijd en werkt slordig!"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 33856285,
+    "input": {
+      "text": "Maar dat hebben we laatst bij de vergadering afgesproken toch?"
+    },
+    "options": [
+      {
+        "text": "Dat had je wel geweten als je bij de afgelopen algemene team-meeting aanwezig was."
+      },
+      {
+        "text": "Wij hebben afgesproken in de afgelopen algemene team-meeting om dagelijks een stand-up te houden om 10u. "
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 33856285,
+    "input": {
+      "text": "Er was een probleem met de code die je gisteren gepusht hebt. Het werkte niet goed samen met andere componenten."
+    },
+    "options": [
+      {
+        "text": "Heb jij integratietesten gedraaid voor het pushen van je code?"
+      },
+      {
+        "text": "Je werkt wat slordig. Wij moesten je code fixen want het werkte niet met andere componenten."
+      },
+      {
+        "text": "WIj hebben in de team-meeting afgesproken om eerst integratietesten te draaien en dan pas code te pushen naar de main branch."
+      },
+      {
+        "text": "Hoe vind je het gaan?"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 33856285,
+    "input": {
+      "text": "Dat kan gebeuren, probeer wat uitgebreider te testen de volgende keer."
+    },
+    "options": [
+      {
+        "text": "Ik merkte dat de code die jij hebt gepusht niet werkte met andere componenten. Zo hadden we de opdrachtgever onze resultaten niet kunnen laten zien."
+      },
+      {
+        "text": "Wel goed dat de functionaliteit op tijd is. Punt is dat het team vanuit de main branch werkt en wij van daaruit een demo moeten laten zien, vandaar dat het altijd moet werken. "
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 33856285,
+    "input": {
+      "text": "Zullen we aan het volgende stuk samenwerken?"
+    },
+    "options": [
+      {
+        "text": "Ik vind het gezellig om in een team te werken. Jij ook?"
+      },
+      {
+        "text": "Hoe vind je het om in een groot, echt, project te werken, bijvoorbeeld met integratietesten en coding standaarden?"
+      },
+      {
+        "text": "Zie je de noodzaak van  coding standaarden en goede integratietesten?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 33856285,
+    "input": {
+      "text": "Denk je dat dat lukt de volgende keer?"
+    },
+    "options": [
+      {
+        "text": "Integratietesten zorgen er voor dat de software als geheel werkt. "
+      },
+      {
+        "text": "Zal ik je helpen met de komende sprint?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      2
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 33856285,
+    "input": {
+      "text": "Top, zullen we nu ergens aan gaan werken?"
+    },
+    "options": [
+      {
+        "text": "Even samen een feature programmeren? Zal ik ook je code reviewen vóór het pushen de volgende keer?"
+      },
+      {
+        "text": "Ik kan over je schouder meekijken en tips geven."
+      },
+      {
+        "text": "Zullen wij morgen afspreken, vroeg beginnen?"
+      },
+      {
+        "text": "Wat spreken we af?"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      1,
+      2
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 33856285,
+    "input": {
+      "text": "Dat is dan afgesproken."
+    },
+    "options": [
+      {
+        "text": "Zullen we een afspraak maken?"
+      },
+      {
+        "text": "Wanneer wil je afspreken?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      2
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 33856285,
+    "input": {
+      "text": "Dan kan ik ook wel."
+    },
+    "options": [
+      {
+        "text": "Prima hoor"
+      },
+      {
+        "text": "Dat is goed"
+      },
+      {
+        "text": "Afgesproken"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 230009542,
+    "input": {
+      "text": "Er was net een daily standup, waarom was je er niet bij? "
+    },
+    "options": [
+      {
+        "text": "Hoi, je hebt net de daily standup gemist. Kan gebeuren natuurlijk, maar merk wel dat je wat vaker moeite hebt om hier op tijd te zijn toch?"
+      },
+      {
+        "text": "Hallo, wij hebben net de daily stand-up gehad. Waarom was jij er niet?"
+      },
+      {
+        "text": "Wij hebben net de daily stand-up gehad maar maakt niet uit. Ik heb soms ook moeite om vroeg wakker te worden. "
+      },
+      {
+        "text": "Jij bent er nooit op tijd en werkt slordig!"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 230009542,
+    "input": {
+      "text": "Kan altijd wel gebeuren, zorg dat je er de volgende keer bij bent"
+    },
+    "options": [
+      {
+        "text": "Dat had je wel geweten als je bij de afgelopen algemene team-meeting aanwezig was."
+      },
+      {
+        "text": "Wij hebben afgesproken in de afgelopen algemene team-meeting om dagelijks een stand-up te houden om 10u. "
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 230009542,
+    "input": {
+      "text": "goed om te horen"
+    },
+    "options": [
+      {
+        "text": "Heb jij integratietesten gedraaid voor het pushen van je code?"
+      },
+      {
+        "text": "Je werkt wat slordig. Wij moesten je code fixen want het werkte niet met andere componenten."
+      },
+      {
+        "text": "WIj hebben in de team-meeting afgesproken om eerst integratietesten te draaien en dan pas code te pushen naar de main branch."
+      },
+      {
+        "text": "Hoe vind je het gaan?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 230009542,
+    "input": {
+      "text": "Dat is een goede reden, maar je hebt zeker niet aan de tests gedacht voor jouw functionaliteit dan?"
+    },
+    "options": [
+      {
+        "text": "Ik merkte dat de code die jij hebt gepusht niet werkte met andere componenten. Zo hadden we de opdrachtgever onze resultaten niet kunnen laten zien."
+      },
+      {
+        "text": "Wel goed dat de functionaliteit op tijd is. Punt is dat het team vanuit de main branch werkt en wij van daaruit een demo moeten laten zien, vandaar dat het altijd moet werken. "
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 230009542,
+    "input": {
+      "text": "Als je dat even aanpast, ik wil je er best bij helpen als het nodig is"
+    },
+    "options": [
+      {
+        "text": "Ik vind het gezellig om in een team te werken. Jij ook?"
+      },
+      {
+        "text": "Hoe vind je het om in een groot, echt, project te werken, bijvoorbeeld met integratietesten en coding standaarden?"
+      },
+      {
+        "text": "Zie je de noodzaak van  coding standaarden en goede integratietesten?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      1,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 230009542,
+    "input": {
+      "text": "Had ik ook, je komt pas achter sommige dingen als je er een tijdje mee werkt. Andere zijn gewoon verplicht door de universiteit"
+    },
+    "options": [
+      {
+        "text": "Integratietesten zorgen er voor dat de software als geheel werkt. "
+      },
+      {
+        "text": "Zal ik je helpen met de komende sprint?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 230009542,
+    "input": {
+      "text": "zodat de code van iedereen er ongeveer hetzelfde uitziet, verbeterd de leesbaarheid van het project"
+    },
+    "options": [
+      {
+        "text": "Coding standaarden helpen met uniformiteit. Ook is het makkelijk om automatische checks uit te voeren."
+      },
+      {
+        "text": "Voor beheer is het goed om een standaard te hebben. Na enkele maanden moet ik mijn eigen code ook nog kunnen lezen."
+      },
+      {
+        "text": "Kan ik je ergens mee helpen?"
+      },
+      {
+        "text": "Wij hebben het nu eenmaal zo afgesproken, dus doe ik het ook. "
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 230009542,
+    "input": {
+      "text": "Ik ook niet"
+    },
+    "options": [
+      {
+        "text": "Kan ik je ergens mee helpen?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 230009542,
+    "input": {
+      "text": "geen probleem wanneer wil je dat doen?"
+    },
+    "options": [
+      {
+        "text": "Even samen een feature programmeren? Zal ik ook je code reviewen vóór het pushen de volgende keer?"
+      },
+      {
+        "text": "Ik kan over je schouder meekijken en tips geven."
+      },
+      {
+        "text": "Zullen wij morgen afspreken, vroeg beginnen?"
+      },
+      {
+        "text": "Wat spreken we af?"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      4,
+      4
+    ],
+    "goldenMatch": 4
+  },
+  {
+    "playthroughRID": 230009542,
+    "input": {
+      "text": "toppie"
+    },
+    "options": [
+      {
+        "text": "Zullen we een afspraak maken?"
+      },
+      {
+        "text": "Wanneer wil je afspreken?"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 230009542,
+    "input": {
+      "text": "dan werken we er morgenmiddag aan"
+    },
+    "options": [
+      {
+        "text": "Prima hoor"
+      },
+      {
+        "text": "Dat is goed"
+      },
+      {
+        "text": "Afgesproken"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      3,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2015557967,
+    "input": {
+      "text": "Er was een standup vanochtend"
+    },
+    "options": [
+      {
+        "text": "Hoi, je hebt net de daily standup gemist. Kan gebeuren natuurlijk, maar merk wel dat je wat vaker moeite hebt om hier op tijd te zijn toch?"
+      },
+      {
+        "text": "Hallo, wij hebben net de daily stand-up gehad. Waarom was jij er niet?"
+      },
+      {
+        "text": "Wij hebben net de daily stand-up gehad maar maakt niet uit. Ik heb soms ook moeite om vroeg wakker te worden. "
+      },
+      {
+        "text": "Jij bent er nooit op tijd en werkt slordig!"
+      }
+    ],
+    "playerMatch": 3,
+    "expertMatches": [
+      3,
+      2
+    ],
+    "goldenMatch": 3
+  },
+  {
+    "playthroughRID": 2015557967,
+    "input": {
+      "text": "Correlatie != causatie"
+    },
+    "options": [
+      {
+        "text": "Dan moet je toch eerder wakker worden."
+      },
+      {
+        "text": "Dan zijn we geniën."
+      },
+      {
+        "text": "Dat wil niet zeggen dat alle mensen die laat wakker worden slimmer zijn."
+      }
+    ],
+    "playerMatch": 3,
+    "expertMatches": [
+      3,
+      3
+    ],
+    "goldenMatch": 3
+  },
+  {
+    "playthroughRID": 2015557967,
+    "input": {
+      "text": "Hoe gaat het met je integratietests?"
+    },
+    "options": [
+      {
+        "text": "Wij hebben afgesproken in de afgelopen algemene team-meeting om dagelijks een stand-up te houden om 10u. "
+      },
+      {
+        "text": "Snap je dat het belangrijk is om bij vergaderingen te zijn? Jij was er ook niet bij de team-meeting."
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2015557967,
+    "input": {
+      "text": "Top. Hoe gaat het met je integratietests?"
+    },
+    "options": [
+      {
+        "text": "Heb jij integratietesten gedraaid voor het pushen van je code?"
+      },
+      {
+        "text": "Je werkt wat slordig. Wij moesten je code fixen want het werkte niet met andere componenten."
+      },
+      {
+        "text": "WIj hebben in de team-meeting afgesproken om eerst integratietesten te draaien en dan pas code te pushen naar de main branch."
+      },
+      {
+        "text": "Hoe vind je het gaan?"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      4,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 2015557967,
+    "input": {
+      "text": "Dat garandeert natuurlijk niet zo veel. "
+    },
+    "options": [
+      {
+        "text": "Ik merkte dat de code die jij hebt gepusht niet werkte met andere componenten. Zo hadden we de opdrachtgever onze resultaten niet kunnen laten zien."
+      },
+      {
+        "text": "Wel goed dat de functionaliteit op tijd is. Punt is dat het team vanuit de main branch werkt en wij van daaruit een demo moeten laten zien, vandaar dat het altijd moet werken. "
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2015557967,
+    "input": {
+      "text": "Zoals?"
+    },
+    "options": [
+      {
+        "text": "Integratietesten zorgen er voor dat de software als geheel werkt. "
+      },
+      {
+        "text": "Zal ik je helpen met de komende sprint?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2015557967,
+    "input": {
+      "text": "Voor mensen die later nog met de code aan de gang moeten. Dat kunnen wij zijn of volgende projectgroepen"
+    },
+    "options": [
+      {
+        "text": "Coding standaarden helpen met uniformiteit. Ook is het makkelijk om automatische checks uit te voeren."
+      },
+      {
+        "text": "Voor beheer is het goed om een standaard te hebben. Na enkele maanden moet ik mijn eigen code ook nog kunnen lezen."
+      },
+      {
+        "text": "Kan ik je ergens mee helpen?"
+      },
+      {
+        "text": "Wij hebben het nu eenmaal zo afgesproken, dus doe ik het ook. "
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 2015557967,
+    "input": {
+      "text": "Het is ook even wennen"
+    },
+    "options": [
+      {
+        "text": "Kan ik je ergens mee helpen?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2015557967,
+    "input": {
+      "text": "Sure"
+    },
+    "options": [
+      {
+        "text": "Even samen een feature programmeren? Zal ik ook je code reviewen vóór het pushen de volgende keer?"
+      },
+      {
+        "text": "Ik kan over je schouder meekijken en tips geven."
+      },
+      {
+        "text": "Zullen wij morgen afspreken, vroeg beginnen?"
+      },
+      {
+        "text": "Wat spreken we af?"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2015557967,
+    "input": {
+      "text": "Top, wanneer doen we dat?"
+    },
+    "options": [
+      {
+        "text": "Zullen we een afspraak maken?"
+      },
+      {
+        "text": "Wanneer wil je afspreken?"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 2015557967,
+    "input": {
+      "text": "Ik ook, maar dan is de demo voor de klant"
+    },
+    "options": [
+      {
+        "text": "Prima hoor"
+      },
+      {
+        "text": "Dat is goed"
+      },
+      {
+        "text": "Afgesproken"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      3,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2048850722,
+    "input": {
+      "text": "Ja, we hadden net de dagelijkse standup."
+    },
+    "options": [
+      {
+        "text": "Hoi, je hebt net de daily standup gemist. Kan gebeuren natuurlijk, maar merk wel dat je wat vaker moeite hebt om hier op tijd te zijn toch?"
+      },
+      {
+        "text": "Hallo, wij hebben net de daily stand-up gehad. Waarom was jij er niet?"
+      },
+      {
+        "text": "Wij hebben net de daily stand-up gehad maar maakt niet uit. Ik heb soms ook moeite om vroeg wakker te worden. "
+      },
+      {
+        "text": "Jij bent er nooit op tijd en werkt slordig!"
+      }
+    ],
+    "playerMatch": 3,
+    "expertMatches": [
+      3,
+      1
+    ],
+    "goldenMatch": 3
+  },
+  {
+    "playthroughRID": 2048850722,
+    "input": {
+      "text": "Ja, dat kan wel zo zijn, maar we hebben nou eenmaal elke ochtend afgesproken om een standup te houden."
+    },
+    "options": [
+      {
+        "text": "Dan moet je toch eerder wakker worden."
+      },
+      {
+        "text": "Dan zijn we geniën."
+      },
+      {
+        "text": "Dat wil niet zeggen dat alle mensen die laat wakker worden slimmer zijn."
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      1,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2048850722,
+    "input": {
+      "text": "Zeker, maar het is wel belangrijk dat je er bent bij de standup, dan weten we waar je aan het werk bent."
+    },
+    "options": [
+      {
+        "text": "Wij hebben afgesproken in de afgelopen algemene team-meeting om dagelijks een stand-up te houden om 10u. "
+      },
+      {
+        "text": "Snap je dat het belangrijk is om bij vergaderingen te zijn? Jij was er ook niet bij de team-meeting."
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      2,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 2048850722,
+    "input": {
+      "text": "Ja, dat zou fijn zijn voor de rest van het team. We hebben trouwens ook naar je nieuwe feature gekeken en daar zaten wat bugs in."
+    },
+    "options": [
+      {
+        "text": "Heb jij integratietesten gedraaid voor het pushen van je code?"
+      },
+      {
+        "text": "Je werkt wat slordig. Wij moesten je code fixen want het werkte niet met andere componenten."
+      },
+      {
+        "text": "WIj hebben in de team-meeting afgesproken om eerst integratietesten te draaien en dan pas code te pushen naar de main branch."
+      },
+      {
+        "text": "Hoe vind je het gaan?"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      null,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 2048850722,
+    "input": {
+      "text": "Ja niet voor niks bestaat de \"it worked on my machine\""
+    },
+    "options": [
+      {
+        "text": "Ik merkte dat de code die jij hebt gepusht niet werkte met andere componenten. Zo hadden we de opdrachtgever onze resultaten niet kunnen laten zien."
+      },
+      {
+        "text": "Wel goed dat de functionaliteit op tijd is. Punt is dat het team vanuit de main branch werkt en wij van daaruit een demo moeten laten zien, vandaar dat het altijd moet werken. "
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      1,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2048850722,
+    "input": {
+      "text": "Ja, volgende keer eerst even testen"
+    },
+    "options": [
+      {
+        "text": "Ik vind het gezellig om in een team te werken. Jij ook?"
+      },
+      {
+        "text": "Hoe vind je het om in een groot, echt, project te werken, bijvoorbeeld met integratietesten en coding standaarden?"
+      },
+      {
+        "text": "Zie je de noodzaak van  coding standaarden en goede integratietesten?"
+      }
+    ],
+    "playerMatch": 3,
+    "expertMatches": [
+      null,
+      3
+    ],
+    "goldenMatch": 3
+  },
+  {
+    "playthroughRID": 2048850722,
+    "input": {
+      "text": "Goed"
+    },
+    "options": [
+      {
+        "text": "Integratietesten zorgen er voor dat de software als geheel werkt. "
+      },
+      {
+        "text": "Zal ik je helpen met de komende sprint?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2048850722,
+    "input": {
+      "text": "Koffie?"
+    },
+    "options": [
+      {
+        "text": "Even samen een feature programmeren? Zal ik ook je code reviewen vóór het pushen de volgende keer?"
+      },
+      {
+        "text": "Ik kan over je schouder meekijken en tips geven."
+      },
+      {
+        "text": "Zullen wij morgen afspreken, vroeg beginnen?"
+      },
+      {
+        "text": "Wat spreken we af?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2048850722,
+    "input": {
+      "text": "Koffie?"
+    },
+    "options": [
+      {
+        "text": "Zullen we een afspraak maken?"
+      },
+      {
+        "text": "Wanneer wil je afspreken?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2048850722,
+    "input": {
+      "text": "Prima"
+    },
+    "options": [
+      {
+        "text": "Prima hoor"
+      },
+      {
+        "text": "Dat is goed"
+      },
+      {
+        "text": "Afgesproken"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      1,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 1311622067,
+    "input": {
+      "text": "Ja we hadden net een standup, zou wel chill zijn als je er volgende keer bij bent."
+    },
+    "options": [
+      {
+        "text": "Hoi, je hebt net de daily standup gemist. Kan gebeuren natuurlijk, maar merk wel dat je wat vaker moeite hebt om hier op tijd te zijn toch?"
+      },
+      {
+        "text": "Hallo, wij hebben net de daily stand-up gehad. Waarom was jij er niet?"
+      },
+      {
+        "text": "Wij hebben net de daily stand-up gehad maar maakt niet uit. Ik heb soms ook moeite om vroeg wakker te worden. "
+      },
+      {
+        "text": "Jij bent er nooit op tijd en werkt slordig!"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 1311622067,
+    "input": {
+      "text": "Goed. Hoe vond je de feature gaan die je gisteren had geïmplementeerd?"
+    },
+    "options": [
+      {
+        "text": "Wij hebben afgesproken in de afgelopen algemene team-meeting om dagelijks een stand-up te houden om 10u. "
+      },
+      {
+        "text": "Snap je dat het belangrijk is om bij vergaderingen te zijn? Jij was er ook niet bij de team-meeting."
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1311622067,
+    "input": {
+      "text": "Goed. Hoe vond je de feature gaan die je gister had geïmplementeerd?"
+    },
+    "options": [
+      {
+        "text": "Heb jij integratietesten gedraaid voor het pushen van je code?"
+      },
+      {
+        "text": "Je werkt wat slordig. Wij moesten je code fixen want het werkte niet met andere componenten."
+      },
+      {
+        "text": "WIj hebben in de team-meeting afgesproken om eerst integratietesten te draaien en dan pas code te pushen naar de main branch."
+      },
+      {
+        "text": "Hoe vind je het gaan?"
+      }
+    ],
+    "playerMatch": 4,
+    "expertMatches": [
+      4,
+      4
+    ],
+    "goldenMatch": 4
+  },
+  {
+    "playthroughRID": 1311622067,
+    "input": {
+      "text": "Ja ik zag het, we moesten wel wat fixen want het werkte niet goed samen met de rest van het project."
+    },
+    "options": [
+      {
+        "text": "Ik merkte dat de code die jij hebt gepusht niet werkte met andere componenten. Zo hadden we de opdrachtgever onze resultaten niet kunnen laten zien."
+      },
+      {
+        "text": "Wel goed dat de functionaliteit op tijd is. Punt is dat het team vanuit de main branch werkt en wij van daaruit een demo moeten laten zien, vandaar dat het altijd moet werken. "
+      },
+      {
+        "text": "Check je wel dat de software werkt als geheel voordat je het pusht naar de main branch?"
+      },
+      {
+        "text": "Goed om te horen dat het goed gaat. Het is even wennen denk ik."
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      1
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 1311622067,
+    "input": {
+      "text": "Koffie?"
+    },
+    "options": [
+      {
+        "text": "Ik vind het gezellig om in een team te werken. Jij ook?"
+      },
+      {
+        "text": "Hoe vind je het om in een groot, echt, project te werken, bijvoorbeeld met integratietesten en coding standaarden?"
+      },
+      {
+        "text": "Zie je de noodzaak van  coding standaarden en goede integratietesten?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1311622067,
+    "input": {
+      "text": "Welke aspecten heb je moeite mee?"
+    },
+    "options": [
+      {
+        "text": "Integratietesten zorgen er voor dat de software als geheel werkt. "
+      },
+      {
+        "text": "Zal ik je helpen met de komende sprint?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1311622067,
+    "input": {
+      "text": "Top"
+    },
+    "options": [
+      {
+        "text": "Even samen een feature programmeren? Zal ik ook je code reviewen vóór het pushen de volgende keer?"
+      },
+      {
+        "text": "Ik kan over je schouder meekijken en tips geven."
+      },
+      {
+        "text": "Zullen wij morgen afspreken, vroeg beginnen?"
+      },
+      {
+        "text": "Wat spreken we af?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1311622067,
+    "input": {
+      "text": "Ja prima, zal ik meekijken tijdens het programmeren?"
+    },
+    "options": [
+      {
+        "text": "Prima hoor"
+      },
+      {
+        "text": "Dat is goed"
+      },
+      {
+        "text": "Afgesproken"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 1090274191,
+    "input": {
+      "text": "We hadden net de daily standup."
+    },
+    "options": [
+      {
+        "text": "Hoi, je hebt net de daily standup gemist. Kan gebeuren natuurlijk, maar merk wel dat je wat vaker moeite hebt om hier op tijd te zijn toch?"
+      },
+      {
+        "text": "Hallo, wij hebben net de daily stand-up gehad. Waarom was jij er niet?"
+      },
+      {
+        "text": "Wij hebben net de daily stand-up gehad maar maakt niet uit. Ik heb soms ook moeite om vroeg wakker te worden. "
+      },
+      {
+        "text": "Jij bent er nooit op tijd en werkt slordig!"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      3,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 1090274191,
+    "input": {
+      "text": "We hebben in een vergadering afgesproken dat iedereen daar bij zou zijn, maar daar was je ook niet, dus dat had je niet kunnen weten."
+    },
+    "options": [
+      {
+        "text": "Dat had je wel geweten als je bij de afgelopen algemene team-meeting aanwezig was."
+      },
+      {
+        "text": "Wij hebben afgesproken in de afgelopen algemene team-meeting om dagelijks een stand-up te houden om 10u. "
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      1,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 1090274191,
+    "input": {
+      "text": "Geen probleem verder hoor. We hadden wat stress over de klant die zo langs komt."
+    },
+    "options": [
+      {
+        "text": "Heb jij integratietesten gedraaid voor het pushen van je code?"
+      },
+      {
+        "text": "Je werkt wat slordig. Wij moesten je code fixen want het werkte niet met andere componenten."
+      },
+      {
+        "text": "WIj hebben in de team-meeting afgesproken om eerst integratietesten te draaien en dan pas code te pushen naar de main branch."
+      },
+      {
+        "text": "Hoe vind je het gaan?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1090274191,
+    "input": {
+      "text": "We hebben in de vergadering ook afgesproken dat we dat doen voor we de code insturen, om problemen als dit te ontwijken."
+    },
+    "options": [
+      {
+        "text": "Ik merkte dat de code die jij hebt gepusht niet werkte met andere componenten. Zo hadden we de opdrachtgever onze resultaten niet kunnen laten zien."
+      },
+      {
+        "text": "Wel goed dat de functionaliteit op tijd is. Punt is dat het team vanuit de main branch werkt en wij van daaruit een demo moeten laten zien, vandaar dat het altijd moet werken. "
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1090274191,
+    "input": {
+      "text": "Kan iedereen gebeuren. Zullen we er nu samen aan werken?"
+    },
+    "options": [
+      {
+        "text": "Ik vind het gezellig om in een team te werken. Jij ook?"
+      },
+      {
+        "text": "Hoe vind je het om in een groot, echt, project te werken, bijvoorbeeld met integratietesten en coding standaarden?"
+      },
+      {
+        "text": "Zie je de noodzaak van  coding standaarden en goede integratietesten?"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 1090274191,
+    "input": {
+      "text": "Die zijn er wel met een reden, maar anders kan je in een vergadering opgooien dat we daar wat minder mee hoeven te doen."
+    },
+    "options": [
+      {
+        "text": "Integratietesten zorgen er voor dat de software als geheel werkt. "
+      },
+      {
+        "text": "Zal ik je helpen met de komende sprint?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1090274191,
+    "input": {
+      "text": "Ok, laten we naar je vorige functionaliteit kijken en die werkend krijgen!"
+    },
+    "options": [
+      {
+        "text": "Even samen een feature programmeren? Zal ik ook je code reviewen vóór het pushen de volgende keer?"
+      },
+      {
+        "text": "Ik kan over je schouder meekijken en tips geven."
+      },
+      {
+        "text": "Zullen wij morgen afspreken, vroeg beginnen?"
+      },
+      {
+        "text": "Wat spreken we af?"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 1090274191,
+    "input": {
+      "text": "En ik vertel wel wat we hebben besproken in de vergadering"
+    },
+    "options": [
+      {
+        "text": "Zullen we een afspraak maken?"
+      },
+      {
+        "text": "Wanneer wil je afspreken?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1090274191,
+    "input": {
+      "text": "Morgen is de deadline voor de opdrachtgever al, kan je in de ochtend?"
+    },
+    "options": [
+      {
+        "text": "Prima hoor"
+      },
+      {
+        "text": "Dat is goed"
+      },
+      {
+        "text": "Afgesproken"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1965221052,
+    "input": {
+      "text": "We hadden net de daily standup"
+    },
+    "options": [
+      {
+        "text": "Hoi, je hebt net de daily standup gemist. Kan gebeuren natuurlijk, maar merk wel dat je wat vaker moeite hebt om hier op tijd te zijn toch?"
+      },
+      {
+        "text": "Hallo, wij hebben net de daily stand-up gehad. Waarom was jij er niet?"
+      },
+      {
+        "text": "Wij hebben net de daily stand-up gehad maar maakt niet uit. Ik heb soms ook moeite om vroeg wakker te worden. "
+      },
+      {
+        "text": "Jij bent er nooit op tijd en werkt slordig!"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      3,
+      3
+    ],
+    "goldenMatch": 3
+  },
+  {
+    "playthroughRID": 1965221052,
+    "input": {
+      "text": "Oh man, snap ik. We kunnen volgende vergadering een ander tijdstip proberen te kiezen, maar probeer in de tussentijd wel erbij te zijn."
+    },
+    "options": [
+      {
+        "text": "Oké. Ik woon ook best ver, daarom sta ik tegenwoordig extra vroeg op om op tijd te zijn."
+      },
+      {
+        "text": "Dan moet je toch eerder wakker worden."
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1965221052,
+    "input": {
+      "text": "We zaten nog te werken aan je code, die kwam niet door te integration tests heen."
+    },
+    "options": [
+      {
+        "text": "Wij hebben afgesproken in de afgelopen algemene team-meeting om dagelijks een stand-up te houden om 10u. "
+      },
+      {
+        "text": "Snap je dat het belangrijk is om bij vergaderingen te zijn? Jij was er ook niet bij de team-meeting."
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1965221052,
+    "input": {
+      "text": "Koffie?"
+    },
+    "options": [
+      {
+        "text": "Heb jij integratietesten gedraaid voor het pushen van je code?"
+      },
+      {
+        "text": "Je werkt wat slordig. Wij moesten je code fixen want het werkte niet met andere componenten."
+      },
+      {
+        "text": "WIj hebben in de team-meeting afgesproken om eerst integratietesten te draaien en dan pas code te pushen naar de main branch."
+      },
+      {
+        "text": "Hoe vind je het gaan?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1965221052,
+    "input": {
+      "text": "De integration tests faalden op je code, dus er hebben nog wat anderen aan gewerkt. We hebben in de vergadering afgesproken met integration tests te werken"
+    },
+    "options": [
+      {
+        "text": "Ik merkte dat de code die jij hebt gepusht niet werkte met andere componenten. Zo hadden we de opdrachtgever onze resultaten niet kunnen laten zien."
+      },
+      {
+        "text": "Wel goed dat de functionaliteit op tijd is. Punt is dat het team vanuit de main branch werkt en wij van daaruit een demo moeten laten zien, vandaar dat het altijd moet werken. "
+      },
+      {
+        "text": "Check je wel dat de software werkt als geheel voordat je het pusht naar de main branch?"
+      },
+      {
+        "text": "Goed om te horen dat het goed gaat. Het is even wennen denk ik."
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 1965221052,
+    "input": {
+      "text": "Je wat niet bij de vergadering, maar probeer volgende keer wel de notulen te lezen."
+    },
+    "options": [
+      {
+        "text": "Ik vind het gezellig om in een team te werken. Jij ook?"
+      },
+      {
+        "text": "Hoe vind je het om in een groot, echt, project te werken, bijvoorbeeld met integratietesten en coding standaarden?"
+      },
+      {
+        "text": "Zie je de noodzaak van  coding standaarden en goede integratietesten?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1965221052,
+    "input": {
+      "text": "De standaarden van de universiteit zijn best streng, maar dat mag ook wel. Dit is onze eindscriptie."
+    },
+    "options": [
+      {
+        "text": "Integratietesten zorgen er voor dat de software als geheel werkt. "
+      },
+      {
+        "text": "Zal ik je helpen met de komende sprint?"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1965221052,
+    "input": {
+      "text": "We werken nu met z'n 11en, en over een langere tijd"
+    },
+    "options": [
+      {
+        "text": "Coding standaarden helpen met uniformiteit. Ook is het makkelijk om automatische checks uit te voeren."
+      },
+      {
+        "text": "Voor beheer is het goed om een standaard te hebben. Na enkele maanden moet ik mijn eigen code ook nog kunnen lezen."
+      },
+      {
+        "text": "Kan ik je ergens mee helpen?"
+      },
+      {
+        "text": "Wij hebben het nu eenmaal zo afgesproken, dus doe ik het ook. "
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1965221052,
+    "input": {
+      "text": "Ik hiervoor ook niet"
+    },
+    "options": [
+      {
+        "text": "Kan ik je ergens mee helpen?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1965221052,
+    "input": {
+      "text": "Klinkt als een goed plan!"
+    },
+    "options": [
+      {
+        "text": "Even samen een feature programmeren? Zal ik ook je code reviewen vóór het pushen de volgende keer?"
+      },
+      {
+        "text": "Ik kan over je schouder meekijken en tips geven."
+      },
+      {
+        "text": "Zullen wij morgen afspreken, vroeg beginnen?"
+      },
+      {
+        "text": "Wat spreken we af?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1965221052,
+    "input": {
+      "text": "Koffie?"
+    },
+    "options": [
+      {
+        "text": "Zullen we een afspraak maken?"
+      },
+      {
+        "text": "Wanneer wil je afspreken?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1965221052,
+    "input": {
+      "text": "De deadline is morgen al, kan je vanavond of morgenochtend nog?"
+    },
+    "options": [
+      {
+        "text": "Prima hoor"
+      },
+      {
+        "text": "Dat is goed"
+      },
+      {
+        "text": "Afgesproken"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1211333534,
+    "input": {
+      "text": "Ja, er was een standup. Was je dit vergeten?"
+    },
+    "options": [
+      {
+        "text": "Hoi, je hebt net de daily standup gemist. Kan gebeuren natuurlijk, maar merk wel dat je wat vaker moeite hebt om hier op tijd te zijn toch?"
+      },
+      {
+        "text": "Hallo, wij hebben net de daily stand-up gehad. Waarom was jij er niet?"
+      },
+      {
+        "text": "Wij hebben net de daily stand-up gehad maar maakt niet uit. Ik heb soms ook moeite om vroeg wakker te worden. "
+      },
+      {
+        "text": "Jij bent er nooit op tijd en werkt slordig!"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 1211333534,
+    "input": {
+      "text": "De standup is elke dag, dan weet je dat nu "
+    },
+    "options": [
+      {
+        "text": "Dat had je wel geweten als je bij de afgelopen algemene team-meeting aanwezig was."
+      },
+      {
+        "text": "Wij hebben afgesproken in de afgelopen algemene team-meeting om dagelijks een stand-up te houden om 10u. "
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 1211333534,
+    "input": {
+      "text": "Probeer volgende keer graag op tijd te komen. Het kan iedereen gebeuren, maar dit hebben we het liefst zo min mogelijk"
+    },
+    "options": [
+      {
+        "text": "Heb jij integratietesten gedraaid voor het pushen van je code?"
+      },
+      {
+        "text": "Je werkt wat slordig. Wij moesten je code fixen want het werkte niet met andere componenten."
+      },
+      {
+        "text": "WIj hebben in de team-meeting afgesproken om eerst integratietesten te draaien en dan pas code te pushen naar de main branch."
+      },
+      {
+        "text": "Hoe vind je het gaan?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1211333534,
+    "input": {
+      "text": "Probeer voordat je pusht dan nog even een integratietest te runnen, dan is alles goed."
+    },
+    "options": [
+      {
+        "text": "Ik merkte dat de code die jij hebt gepusht niet werkte met andere componenten. Zo hadden we de opdrachtgever onze resultaten niet kunnen laten zien."
+      },
+      {
+        "text": "Wel goed dat de functionaliteit op tijd is. Punt is dat het team vanuit de main branch werkt en wij van daaruit een demo moeten laten zien, vandaar dat het altijd moet werken. "
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1211333534,
+    "input": {
+      "text": "Probeer hier aan te denken volgende keer, dan is alles goed."
+    },
+    "options": [
+      {
+        "text": "Ik vind het gezellig om in een team te werken. Jij ook?"
+      },
+      {
+        "text": "Hoe vind je het om in een groot, echt, project te werken, bijvoorbeeld met integratietesten en coding standaarden?"
+      },
+      {
+        "text": "Zie je de noodzaak van  coding standaarden en goede integratietesten?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1211333534,
+    "input": {
+      "text": "Sommige aspecten voelen inderdaad overbodig. Bij welke heb jij dat?"
+    },
+    "options": [
+      {
+        "text": "Integratietesten zorgen er voor dat de software als geheel werkt. "
+      },
+      {
+        "text": "Zal ik je helpen met de komende sprint?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1211333534,
+    "input": {
+      "text": "Top, laten we morgen na de standup samen beginnen."
+    },
+    "options": [
+      {
+        "text": "Even samen een feature programmeren? Zal ik ook je code reviewen vóór het pushen de volgende keer?"
+      },
+      {
+        "text": "Ik kan over je schouder meekijken en tips geven."
+      },
+      {
+        "text": "Zullen wij morgen afspreken, vroeg beginnen?"
+      },
+      {
+        "text": "Wat spreken we af?"
+      }
+    ],
+    "playerMatch": 3,
+    "expertMatches": [
+      3,
+      3
+    ],
+    "goldenMatch": 3
+  },
+  {
+    "playthroughRID": 1211333534,
+    "input": {
+      "text": "Wanneer komt je uit?"
+    },
+    "options": [
+      {
+        "text": "Wanneer wel?"
+      },
+      {
+        "text": "Dan kijken we nog wel even."
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      1,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 1211333534,
+    "input": {
+      "text": "Goed laten we dan morgenmiddag eraan gaan. Rond 12 uur?"
+    },
+    "options": [
+      {
+        "text": "Prima hoor"
+      },
+      {
+        "text": "Dat is goed"
+      },
+      {
+        "text": "Afgesproken"
+      }
+    ],
+    "playerMatch": 3,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 233071200,
+    "input": {
+      "text": "Ja, we hebben afgesproken een dagelijkse standup te houden."
+    },
+    "options": [
+      {
+        "text": "Hoi, je hebt net de daily standup gemist. Kan gebeuren natuurlijk, maar merk wel dat je wat vaker moeite hebt om hier op tijd te zijn toch?"
+      },
+      {
+        "text": "Hallo, wij hebben net de daily stand-up gehad. Waarom was jij er niet?"
+      },
+      {
+        "text": "Wij hebben net de daily stand-up gehad maar maakt niet uit. Ik heb soms ook moeite om vroeg wakker te worden. "
+      },
+      {
+        "text": "Jij bent er nooit op tijd en werkt slordig!"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      null,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 233071200,
+    "input": {
+      "text": "Dat was afgesproken in de meeting van ons"
+    },
+    "options": [
+      {
+        "text": "Dat had je wel geweten als je bij de afgelopen algemene team-meeting aanwezig was."
+      },
+      {
+        "text": "Wij hebben afgesproken in de afgelopen algemene team-meeting om dagelijks een stand-up te houden om 10u. "
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 233071200,
+    "input": {
+      "text": "Top! Er waren trouwens een aantal integratie problemen met je push van gisteren"
+    },
+    "options": [
+      {
+        "text": "Heb jij integratietesten gedraaid voor het pushen van je code?"
+      },
+      {
+        "text": "Je werkt wat slordig. Wij moesten je code fixen want het werkte niet met andere componenten."
+      },
+      {
+        "text": "WIj hebben in de team-meeting afgesproken om eerst integratietesten te draaien en dan pas code te pushen naar de main branch."
+      },
+      {
+        "text": "Hoe vind je het gaan?"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 233071200,
+    "input": {
+      "text": "Het kan zijn dat het niet op andere machines werkt in zo'n groot project. Kun je dit volgende keer doen?"
+    },
+    "options": [
+      {
+        "text": "Ik merkte dat de code die jij hebt gepusht niet werkte met andere componenten. Zo hadden we de opdrachtgever onze resultaten niet kunnen laten zien."
+      },
+      {
+        "text": "Wel goed dat de functionaliteit op tijd is. Punt is dat het team vanuit de main branch werkt en wij van daaruit een demo moeten laten zien, vandaar dat het altijd moet werken. "
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 233071200,
+    "input": {
+      "text": "Voortaan wel doen graag"
+    },
+    "options": [
+      {
+        "text": "Ik vind het gezellig om in een team te werken. Jij ook?"
+      },
+      {
+        "text": "Hoe vind je het om in een groot, echt, project te werken, bijvoorbeeld met integratietesten en coding standaarden?"
+      },
+      {
+        "text": "Zie je de noodzaak van  coding standaarden en goede integratietesten?"
+      }
+    ],
+    "playerMatch": 3,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 233071200,
+    "input": {
+      "text": "Zou je het kunnen samenvatten in je eigen woorden?"
+    },
+    "options": [
+      {
+        "text": "Integratietesten zorgen er voor dat de software als geheel werkt. "
+      },
+      {
+        "text": "Zal ik je helpen met de komende sprint?"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 233071200,
+    "input": {
+      "text": "In mijn ervaring hebben andere mensen wel problemen met het lezen van andermans code. Dit process willen we zo makkelijk mogelijk maken"
+    },
+    "options": [
+      {
+        "text": "Coding standaarden helpen met uniformiteit. Ook is het makkelijk om automatische checks uit te voeren."
+      },
+      {
+        "text": "Voor beheer is het goed om een standaard te hebben. Na enkele maanden moet ik mijn eigen code ook nog kunnen lezen."
+      },
+      {
+        "text": "Kan ik je ergens mee helpen?"
+      },
+      {
+        "text": "Wij hebben het nu eenmaal zo afgesproken, dus doe ik het ook. "
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      null,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 233071200,
+    "input": {
+      "text": "Top, morgen middag doen?"
+    },
+    "options": [
+      {
+        "text": "Zullen we een afspraak maken?"
+      },
+      {
+        "text": "Wanneer wil je afspreken?"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 233071200,
+    "input": {
+      "text": "Klinkt goed, zie ik je dan!"
+    },
+    "options": [
+      {
+        "text": "Prima hoor"
+      },
+      {
+        "text": "Dat is goed"
+      },
+      {
+        "text": "Afgesproken"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      3,
+      3
+    ],
+    "goldenMatch": 3
+  },
+  {
+    "playthroughRID": 1525032307,
+    "input": {
+      "text": "Ja, we hebben net de daily stand-up gehad."
+    },
+    "options": [
+      {
+        "text": "Hoi, je hebt net de daily standup gemist. Kan gebeuren natuurlijk, maar merk wel dat je wat vaker moeite hebt om hier op tijd te zijn toch?"
+      },
+      {
+        "text": "Hallo, wij hebben net de daily stand-up gehad. Waarom was jij er niet?"
+      },
+      {
+        "text": "Wij hebben net de daily stand-up gehad maar maakt niet uit. Ik heb soms ook moeite om vroeg wakker te worden. "
+      },
+      {
+        "text": "Jij bent er nooit op tijd en werkt slordig!"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      3,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 1525032307,
+    "input": {
+      "text": "We hebben bij de teamvergadering afgesproken dat we dagelijks een stand-up doen."
+    },
+    "options": [
+      {
+        "text": "Dat had je wel geweten als je bij de afgelopen algemene team-meeting aanwezig was."
+      },
+      {
+        "text": "Wij hebben afgesproken in de afgelopen algemene team-meeting om dagelijks een stand-up te houden om 10u. "
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 1525032307,
+    "input": {
+      "text": "Je code lijkt niet door de integration tests heen te komen, en het is best belangrijk dat het werkt voor de demo morgen. Weet je wat er mis mee is?"
+    },
+    "options": [
+      {
+        "text": "Heb jij integratietesten gedraaid voor het pushen van je code?"
+      },
+      {
+        "text": "Je werkt wat slordig. Wij moesten je code fixen want het werkte niet met andere componenten."
+      },
+      {
+        "text": "WIj hebben in de team-meeting afgesproken om eerst integratietesten te draaien en dan pas code te pushen naar de main branch."
+      },
+      {
+        "text": "Hoe vind je het gaan?"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 1525032307,
+    "input": {
+      "text": "Nou, blijkbaar niet. Anders hadden de tests geen problemen opgeleverd."
+    },
+    "options": [
+      {
+        "text": "Ik merkte dat de code die jij hebt gepusht niet werkte met andere componenten. Zo hadden we de opdrachtgever onze resultaten niet kunnen laten zien."
+      },
+      {
+        "text": "Wel goed dat de functionaliteit op tijd is. Punt is dat het team vanuit de main branch werkt en wij van daaruit een demo moeten laten zien, vandaar dat het altijd moet werken. "
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 1525032307,
+    "input": {
+      "text": "Kun je het oplossen?"
+    },
+    "options": [
+      {
+        "text": "Ik vind het gezellig om in een team te werken. Jij ook?"
+      },
+      {
+        "text": "Hoe vind je het om in een groot, echt, project te werken, bijvoorbeeld met integratietesten en coding standaarden?"
+      },
+      {
+        "text": "Zie je de noodzaak van  coding standaarden en goede integratietesten?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1525032307,
+    "input": {
+      "text": "Heb je hulp nodig bij het oplossen van je bugs?"
+    },
+    "options": [
+      {
+        "text": "Integratietesten zorgen er voor dat de software als geheel werkt. "
+      },
+      {
+        "text": "Zal ik je helpen met de komende sprint?"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 1525032307,
+    "input": {
+      "text": "Zullen we daar dan nu aan gaan beginnen?"
+    },
+    "options": [
+      {
+        "text": "Even samen een feature programmeren? Zal ik ook je code reviewen vóór het pushen de volgende keer?"
+      },
+      {
+        "text": "Ik kan over je schouder meekijken en tips geven."
+      },
+      {
+        "text": "Zullen wij morgen afspreken, vroeg beginnen?"
+      },
+      {
+        "text": "Wat spreken we af?"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      1,
+      3
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 1525032307,
+    "input": {
+      "text": "Fijn, let's go."
+    },
+    "options": [
+      {
+        "text": "Zullen we een afspraak maken?"
+      },
+      {
+        "text": "Wanneer wil je afspreken?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1525032307,
+    "input": {
+      "text": "Het moet vandaag, omdat de demo morgen is."
+    },
+    "options": [
+      {
+        "text": "Prima hoor"
+      },
+      {
+        "text": "Dat is goed"
+      },
+      {
+        "text": "Afgesproken"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1593477632,
+    "input": {
+      "text": "Je hebt net de daily stand-up gemist. Kun je voortaan op tijd zijn?"
+    },
+    "options": [
+      {
+        "text": "Hoi, je hebt net de daily standup gemist. Kan gebeuren natuurlijk, maar merk wel dat je wat vaker moeite hebt om hier op tijd te zijn toch?"
+      },
+      {
+        "text": "Hallo, wij hebben net de daily stand-up gehad. Waarom was jij er niet?"
+      },
+      {
+        "text": "Wij hebben net de daily stand-up gehad maar maakt niet uit. Ik heb soms ook moeite om vroeg wakker te worden. "
+      },
+      {
+        "text": "Jij bent er nooit op tijd en werkt slordig!"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      2
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1593477632,
+    "input": {
+      "text": "Valt er veel uit of duurt het gewoon lang? Anders moet je misschien eerder vertrekken."
+    },
+    "options": [
+      {
+        "text": "Oké. Ik woon ook best ver, daarom sta ik tegenwoordig extra vroeg op om op tijd te zijn."
+      },
+      {
+        "text": "Dan moet je toch eerder wakker worden."
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      1,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 1593477632,
+    "input": {
+      "text": "Mooi. Hé, we zagen dat je code niet door de integratietests heen komt, weet je wat daar mis mee is?"
+    },
+    "options": [
+      {
+        "text": "Wij hebben afgesproken in de afgelopen algemene team-meeting om dagelijks een stand-up te houden om 10u. "
+      },
+      {
+        "text": "Snap je dat het belangrijk is om bij vergaderingen te zijn? Jij was er ook niet bij de team-meeting."
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1593477632,
+    "input": {
+      "text": "We gaan het morgen zien! We zagen trouwens dat je code niet door de integratietests heen komt, weet je waardoor dat komt?"
+    },
+    "options": [
+      {
+        "text": "Heb jij integratietesten gedraaid voor het pushen van je code?"
+      },
+      {
+        "text": "Je werkt wat slordig. Wij moesten je code fixen want het werkte niet met andere componenten."
+      },
+      {
+        "text": "WIj hebben in de team-meeting afgesproken om eerst integratietesten te draaien en dan pas code te pushen naar de main branch."
+      },
+      {
+        "text": "Hoe vind je het gaan?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1593477632,
+    "input": {
+      "text": "Blijkbaar toch niet, anders hadden de tests niet voor problemen gezorgd."
+    },
+    "options": [
+      {
+        "text": "Ik merkte dat de code die jij hebt gepusht niet werkte met andere componenten. Zo hadden we de opdrachtgever onze resultaten niet kunnen laten zien."
+      },
+      {
+        "text": "Wel goed dat de functionaliteit op tijd is. Punt is dat het team vanuit de main branch werkt en wij van daaruit een demo moeten laten zien, vandaar dat het altijd moet werken. "
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1593477632,
+    "input": {
+      "text": "Let beter op de tests, ze zijn een ontzettend handig hulpmiddel om je code goed werkend te krijgen."
+    },
+    "options": [
+      {
+        "text": "Ik vind het gezellig om in een team te werken. Jij ook?"
+      },
+      {
+        "text": "Hoe vind je het om in een groot, echt, project te werken, bijvoorbeeld met integratietesten en coding standaarden?"
+      },
+      {
+        "text": "Zie je de noodzaak van  coding standaarden en goede integratietesten?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      3
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1593477632,
+    "input": {
+      "text": "Goed, probeer er in het vervolg een beetje op te letten."
+    },
+    "options": [
+      {
+        "text": "Integratietesten zorgen er voor dat de software als geheel werkt. "
+      },
+      {
+        "text": "Zal ik je helpen met de komende sprint?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1593477632,
+    "input": {
+      "text": "Tof."
+    },
+    "options": [
+      {
+        "text": "Even samen een feature programmeren? Zal ik ook je code reviewen vóór het pushen de volgende keer?"
+      },
+      {
+        "text": "Ik kan over je schouder meekijken en tips geven."
+      },
+      {
+        "text": "Zullen wij morgen afspreken, vroeg beginnen?"
+      },
+      {
+        "text": "Wat spreken we af?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1593477632,
+    "input": {
+      "text": "Oh, waarom niet?"
+    },
+    "options": [
+      {
+        "text": "Wanneer wel?"
+      },
+      {
+        "text": "Dan kijken we nog wel even."
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 1593477632,
+    "input": {
+      "text": "Dan doen we het dan."
+    },
+    "options": [
+      {
+        "text": "Prima hoor"
+      },
+      {
+        "text": "Dat is goed"
+      },
+      {
+        "text": "Afgesproken"
+      }
+    ],
+    "playerMatch": 3,
+    "expertMatches": [
+      3,
+      3
+    ],
+    "goldenMatch": 3
+  },
+  {
+    "playthroughRID": 2116261082,
+    "input": {
+      "text": "Goedemiddag! Ja, er was net een standup. Je was helaas net te laat. Hoe komt dat?"
+    },
+    "options": [
+      {
+        "text": "Hoi, je hebt net de daily standup gemist. Kan gebeuren natuurlijk, maar merk wel dat je wat vaker moeite hebt om hier op tijd te zijn toch?"
+      },
+      {
+        "text": "Hallo, wij hebben net de daily stand-up gehad. Waarom was jij er niet?"
+      },
+      {
+        "text": "Wij hebben net de daily stand-up gehad maar maakt niet uit. Ik heb soms ook moeite om vroeg wakker te worden. "
+      },
+      {
+        "text": "Jij bent er nooit op tijd en werkt slordig!"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      1
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 2116261082,
+    "input": {
+      "text": "We hebben dat wel afgesproken, maar ik snap dat je het misschien bent vergeten. Kun je er voortaan wel op tijd zijn?"
+    },
+    "options": [
+      {
+        "text": "Dat had je wel geweten als je bij de afgelopen algemene team-meeting aanwezig was."
+      },
+      {
+        "text": "Wij hebben afgesproken in de afgelopen algemene team-meeting om dagelijks een stand-up te houden om 10u. "
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      2
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2116261082,
+    "input": {
+      "text": "Ok, dat is goed om te horen. We hadden helaas ook wat problemen met je code, die de integratietests niet haalde. Hoe kan dat komen?"
+    },
+    "options": [
+      {
+        "text": "Heb jij integratietesten gedraaid voor het pushen van je code?"
+      },
+      {
+        "text": "Je werkt wat slordig. Wij moesten je code fixen want het werkte niet met andere componenten."
+      },
+      {
+        "text": "WIj hebben in de team-meeting afgesproken om eerst integratietesten te draaien en dan pas code te pushen naar de main branch."
+      },
+      {
+        "text": "Hoe vind je het gaan?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2116261082,
+    "input": {
+      "text": "Dat is wel fijn inderdaad! We hadden wel wat problemen met hoe de code samenwerkte met andere componenten. Gelukkig hebben we die net kunnen oplossen, maar het leverde wel wat stress op."
+    },
+    "options": [
+      {
+        "text": "Ik merkte dat de code die jij hebt gepusht niet werkte met andere componenten. Zo hadden we de opdrachtgever onze resultaten niet kunnen laten zien."
+      },
+      {
+        "text": "Wel goed dat de functionaliteit op tijd is. Punt is dat het team vanuit de main branch werkt en wij van daaruit een demo moeten laten zien, vandaar dat het altijd moet werken. "
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2116261082,
+    "input": {
+      "text": "Hoe vind je het gaan?"
+    },
+    "options": [
+      {
+        "text": "Ik vind het gezellig om in een team te werken. Jij ook?"
+      },
+      {
+        "text": "Hoe vind je het om in een groot, echt, project te werken, bijvoorbeeld met integratietesten en coding standaarden?"
+      },
+      {
+        "text": "Zie je de noodzaak van  coding standaarden en goede integratietesten?"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      null,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 2116261082,
+    "input": {
+      "text": "Wat voor aspecten bijvoorbeeld?"
+    },
+    "options": [
+      {
+        "text": "Integratietesten zorgen er voor dat de software als geheel werkt. "
+      },
+      {
+        "text": "Zal ik je helpen met de komende sprint?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      null,
+      null
+    ],
+    "goldenMatch": null
+  },
+  {
+    "playthroughRID": 2116261082,
+    "input": {
+      "text": "Code standaarden zijn wel heel noodzakelijk in een groot team, want je begrijpt andermans code misschien niet."
+    },
+    "options": [
+      {
+        "text": "Coding standaarden helpen met uniformiteit. Ook is het makkelijk om automatische checks uit te voeren."
+      },
+      {
+        "text": "Voor beheer is het goed om een standaard te hebben. Na enkele maanden moet ik mijn eigen code ook nog kunnen lezen."
+      },
+      {
+        "text": "Kan ik je ergens mee helpen?"
+      },
+      {
+        "text": "Wij hebben het nu eenmaal zo afgesproken, dus doe ik het ook. "
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  },
+  {
+    "playthroughRID": 2116261082,
+    "input": {
+      "text": "Zullen we afspreken dat we in de toekomst wat vaker samenwerken?"
+    },
+    "options": [
+      {
+        "text": "Kan ik je ergens mee helpen?"
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      null,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 2116261082,
+    "input": {
+      "text": "Dat lijkt me een goed idee. Wanneer zou je kunnen?"
+    },
+    "options": [
+      {
+        "text": "Even samen een feature programmeren? Zal ik ook je code reviewen vóór het pushen de volgende keer?"
+      },
+      {
+        "text": "Ik kan over je schouder meekijken en tips geven."
+      },
+      {
+        "text": "Zullen wij morgen afspreken, vroeg beginnen?"
+      },
+      {
+        "text": "Wat spreken we af?"
+      }
+    ],
+    "playerMatch": null,
+    "expertMatches": [
+      4,
+      4
+    ],
+    "goldenMatch": 4
+  },
+  {
+    "playthroughRID": 2116261082,
+    "input": {
+      "text": "Wanneer wel?"
+    },
+    "options": [
+      {
+        "text": "Wanneer wel?"
+      },
+      {
+        "text": "Dan kijken we nog wel even."
+      }
+    ],
+    "playerMatch": 1,
+    "expertMatches": [
+      1,
+      1
+    ],
+    "goldenMatch": 1
+  },
+  {
+    "playthroughRID": 2116261082,
+    "input": {
+      "text": "Dat is goed."
+    },
+    "options": [
+      {
+        "text": "Prima hoor"
+      },
+      {
+        "text": "Dat is goed"
+      },
+      {
+        "text": "Afgesproken"
+      }
+    ],
+    "playerMatch": 2,
+    "expertMatches": [
+      2,
+      2
+    ],
+    "goldenMatch": 2
+  }
+]
