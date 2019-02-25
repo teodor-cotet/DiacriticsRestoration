@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import tensorflow as tf
 import numpy as np
 #import keras
@@ -8,15 +9,32 @@ import nltk
 from gensim.models.wrappers import FastText as FastTextWrapper
 
 import unidecode
+=======
+import argparse
+import os
+>>>>>>> b831581f36e2fa153e7df04ab393ee066d831e2f
 import re
 import string
+import threading
 import time
 from typing import List
 
+<<<<<<< HEAD
 import argparse
 import os
 import threading
 import spacy
+=======
+import nltk
+import numpy as np
+import tensorflow as tf
+import unidecode
+from gensim.models.wrappers import FastText as FastTextWrapper
+from tensorflow import keras
+import keras 
+nltk.download('punkt')
+
+>>>>>>> b831581f36e2fa153e7df04ab393ee066d831e2f
 
 args = None
 model_embeddings = None
@@ -25,11 +43,10 @@ dict_lock = threading.Lock()
 dict_avg_words = {}
 
 # the weights of the model will be saved in a folder per each epoch
-folder_saved_models = "saved_models/"
 fast_text = "fastText/wiki.ro"
 
 window_sentence = 15 
-window_character = 15 # 2 * x + 1
+window_character = 6 # 2 * x + 1
 
 character_embedding_size = 28
 tag_embedding_size = 5
@@ -243,7 +260,6 @@ def get_embeddings_sentence(clean_tokens_sentence, index_token):
 # return an tuple input (window_char, embedding_token, embedding_sentence)
 def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, \
 				index_last_sent, index_token):
-
 	# window with characters
 	w = []
 	for j in range(index_text - window_character, index_text + window_character + 1):
@@ -266,7 +282,6 @@ def get_input_example(clean_text_utf, index_text, clean_tokens, index_sent, \
 		sentence_embedding = get_embeddings_sentence(clean_tokens[index_sent], index_token)
 	else:
 		sentence_embedding = None
-
 	return (np.int32(w), token_embedding, sentence_embedding)
 
 def replace_char(c):
@@ -401,8 +416,8 @@ def create_examples(original_text, is_test_dataset):
 				index_sent += 1
 			else:
 				index_token += 1
-	except:
-		print('dropeds')
+	except Exception as e:
+		print(e.message, e.args)
 		drop_example = True
 			
 			
@@ -418,7 +433,6 @@ def create_examples(original_text, is_test_dataset):
 		lab = np.float32([0] * args.nr_classes)
 		lab[2] = np.float32(1.0)
 		labels = [lab]
-
 	if is_test_dataset == False:
 		return (window_characters, word_embeddings, sentence_embeddings, tag_tokens, dep_tokens, labels)
 	else:
@@ -459,7 +473,7 @@ def get_dataset(dpath, sess, is_test_dataset=False, restore=False):
 
 	dataset = dataset.map(lambda x:\
 		tf.py_func(create_examples,\
-					(x,is_test_dataset,),\
+					(x, is_test_dataset,),\
 					datatype_returned,\
 					stateful=False),\
 		num_parallel_calls=CPUS)
@@ -542,12 +556,12 @@ def restore_char(pred_char, original_char, original_word):
 	return pred_char
 
 def restore_diacritics(sess, model):
-	# restoration works by going with 2 indeces (current_prediction and index_full_text)
+	# restoration works by going with 2 indices (current_prediction and index_full_text)
 	# in tensorflow predictions and full text and modifying in the full text with the prediction
 	# this will work only if in create examples there are NO examples droped, so
 	# the original text matches that processed by tensorflow
 	# ideas for making it more robust??
-
+	print(model.summary())
 	txt_file = args.restore_diacritics
 	all_txt = []
 	
@@ -578,11 +592,21 @@ def restore_diacritics(sess, model):
 	
 	sess.run(iterator_test.initializer)
 	test_inp_pred, _ = iterator_test.get_next()
+<<<<<<< HEAD
 	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred, \
 		test_tags, test_deps = test_inp_pred
 	input_list = get_input_list(test_char_window_pred, test_words_pred, test_sentence_pred,\
 		test_tags, test_deps)
 	
+=======
+	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred = test_inp_pred
+	#test_char_window_pred.reshape((window_character * 2 + 1, -1))
+	#tf.reshape(test_char_window_pred,  [window_character * 2 + 1, -1])
+	#print(tf.shape(test_char_window_pred))
+	input_list = np.asarray(get_input_list(test_char_window_pred, test_words_pred, test_sentence_pred))
+	#print('input shape for predictions {}'.format(tf.shape(test_char_window_pred[0])))
+
+>>>>>>> b831581f36e2fa153e7df04ab393ee066d831e2f
 	predictions = model.predict(x=input_list,
 				  verbose=1,
 				  steps=nr_predictions)
@@ -759,7 +783,7 @@ def compute_test_accuracy(sess, model):
 	return char_acc, word_acc
 
 def set_up_folders_saved_models():
-	full_path_dir = folder_saved_models + args.folder_saved_model_per_epoch
+	full_path_dir = args.folder_saved_model_per_epoch
 	if args.save_model == True:
 		if os.path.exists(full_path_dir) == False:
 			os.makedirs(full_path_dir)
@@ -769,7 +793,10 @@ def set_up_folders_saved_models():
 			exit(0)
 
 def parse_args():
-	# when specify -load, specify also the nr of classes, if the model uses chars, words, sent
+	# when specify -load, specify also the nr of classes and if the model uses chars, words, sent
+	# to restore diacritics run: 
+	# python3 model_diacritice.py -buff 1000 -fastt -load models/chars24-64 -tv -word -sent -classes 4 -restore raw_text.txt
+	
 	global args
 	parser = argparse.ArgumentParser(description='Run diacritics model')
 	parser.add_argument('-s', dest="save_model", action='store_false', default=True,\
@@ -940,13 +967,13 @@ def construct_model(sess):
 	last_epoch = 0
 	if args.load_model_name is not None:
 		
-		folder_path_with_epochs = folder_saved_models + args.load_model_name 
+		folder_path_with_epochs = args.load_model_name 
 		epochs_files = os.listdir(folder_path_with_epochs)
 		sorted_epochs_files = sorted(epochs_files)
 		load_file = sorted_epochs_files[-1]
-		print('loading model from: ' + folder_saved_models +\
+		print('loading model from: ' +\
 		 		args.load_model_name + load_file)
-		model = keras.models.load_model(folder_saved_models + args.load_model_name + load_file)
+		model = keras.models.load_model(args.load_model_name + load_file)
 		last_epoch = len(sorted_epochs_files)
 	else:
 		vocabulary_size = max_unicode_allowed + 1
@@ -1071,8 +1098,7 @@ if __name__ == "__main__":
 				# save weights
 				if args.save_model == True:
 					print('saving model (and weights)')
-					full_path_epoch_weights = folder_saved_models + args.folder_saved_model_per_epoch +\
-							'epoch_' + str(i) + '.h5'
+					full_path_epoch_weights = os.path.join(args.folder_saved_model_per_epoch, 'epoch_' + str(i) + '.h5')
 					model.save(full_path_epoch_weights)
 				# validate 
 				valid_input = get_input_list(valid_char_window, valid_words, valid_sentence,
