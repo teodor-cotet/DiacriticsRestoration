@@ -1,6 +1,9 @@
 import tensorflow as tf
 import numpy as np
+#import keras
 from tensorflow import keras
+from tensorflow.keras import backend as K
+from tensorflow.keras.layers import Layer
 import nltk
 from gensim.models.wrappers import FastText as FastTextWrapper
 
@@ -13,6 +16,7 @@ from typing import List
 import argparse
 import os
 import threading
+import spacy
 
 args = None
 model_embeddings = None
@@ -28,6 +32,8 @@ window_sentence = 15
 window_character = 15 # 2 * x + 1
 
 character_embedding_size = 28
+tag_embedding_size = 5
+dep_embedding_size = 5
 word_embedding_size = 300
 
 
@@ -37,7 +43,7 @@ neurons_dense_layer_after_merge = 512
 batch_size = 128
 limit_backtracking_characters = 10
 
-CPUS = 2
+CPUS = 1
 size_prefetch_buffer = 10
 max_unicode_allowed = 770
 replace_character = 255
@@ -108,6 +114,7 @@ map_char_to_possible_chars = {
 map_substitute_chars = {'"': '`'}
 characters_in_interest = {'a', 'i', 's', 't'}
 to_lower = {}
+rom_spacy = spacy.load('models/model3')
 
 # get case of the highest probability (returned by softmax)
 def get_case(p):
@@ -319,11 +326,21 @@ def create_examples(original_text, is_test_dataset):
 		clean_text_utf = "".join([replace_char(c) for c in first_clean_text_utf])
 		clean_sentences = nltk.sent_tokenize(clean_text_utf)
 		clean_tokens = []
+		clean_tokens_tag = []
+		clean_tokens_dep = []
 
 		# construct tokens
 		for i in range(len(clean_sentences)):
-			clean_tokens_sent = nltk.word_tokenize(clean_sentences[i])
+			tokens = rom_spacy(clean_sentences[i])
+
+			clean_tokens_sent = [token.text for token in tokens]
+			tag_tokens_sent = [int(token.tag) for token in tokens]
+			dep_tokens_sent = [int(token.dep) for token in tokens]
+			
+			#clean_tokens_sent = nltk.word_tokenize(clean_sentences[i])
 			clean_tokens.append(clean_tokens_sent)
+			clean_tokens_tag.append(tag_tokens_sent)
+			clean_tokens_dep.append(dep_tokens_sent)
 
 		index_text = 0 # current position in text
 		index_sent = 0 # current sentence
@@ -336,12 +353,18 @@ def create_examples(original_text, is_test_dataset):
 		window_characters = []
 		word_embeddings = []
 		sentence_embeddings = []
+		tag_tokens = []
+		dep_tokens = []
 		labels = []
 
 		while index_sent < len(clean_tokens):
 			clean_token = clean_tokens[index_sent][index_token]
+			tag_token = clean_tokens_tag[index_sent][index_token]
+			dep_token = clean_tokens_dep[index_sent][index_token]
+
 			original_word = get_word_around_index(original_text_utf, index_text)
-			i = 0		
+			i = 0
+			# construct all inputs from the current token (letter(a, i, t, s) -> input)
 			while i < len(clean_token):
 
 				if clean_text_utf[index_text] in characters_in_interest:
@@ -357,6 +380,8 @@ def create_examples(original_text, is_test_dataset):
 
 					window_characters.append(win_char)
 					word_embeddings.append(word_emb)
+					tag_tokens.append(np.float32([tag_token]))
+					dep_tokens.append(np.float32([dep_token]))
 					# sentence already computed
 					if sent_emb is None:
 						sentence_embeddings.append(sentence_embeddings[-1])
@@ -388,14 +413,16 @@ def create_examples(original_text, is_test_dataset):
 		word_embeddings = [np.float32([0] * word_embedding_size)]
 		sentence_embeddings = [np.array(\
 			[np.float32([0] * word_embedding_size)] * (window_sentence * 2 + 1))]
+		tag_tokens = [np.float32([0])]
+		dep_tokens = [np.float32([0])]
 		lab = np.float32([0] * args.nr_classes)
 		lab[2] = np.float32(1.0)
 		labels = [lab]
 
 	if is_test_dataset == False:
-		return (window_characters, word_embeddings, sentence_embeddings, labels)
+		return (window_characters, word_embeddings, sentence_embeddings, tag_tokens, dep_tokens, labels)
 	else:
-		return (clean_words, window_characters, word_embeddings, sentence_embeddings, labels, original_words)
+		return (clean_words, window_characters, word_embeddings, sentence_embeddings, tag_tokens, dep_tokens, labels, original_words)
 
 def filter_null_strings(s):
 	if len(s) == 0:
@@ -424,9 +451,11 @@ def get_dataset(dpath, sess, is_test_dataset=False, restore=False):
 	 (tf.py_func(filter_null_strings, [x], tf.bool, stateful=False))[0])
 
 	if is_test_dataset == True:
-		datatype_returned = (tf.string, tf.int32, tf.float32, tf.float32, tf.float32, tf.string)
+		datatype_returned = (tf.string, tf.int32, tf.float32, tf.float32, tf.float32, tf.float32,\
+			 tf.float32, tf.string)
 	else:
-		datatype_returned = (tf.int32, tf.float32, tf.float32, tf.float32)
+		datatype_returned = (tf.int32, tf.float32, tf.float32, tf.float32, tf.float32,\
+			 tf.float32)
 
 	dataset = dataset.map(lambda x:\
 		tf.py_func(create_examples,\
@@ -434,13 +463,14 @@ def get_dataset(dpath, sess, is_test_dataset=False, restore=False):
 					datatype_returned,\
 					stateful=False),\
 		num_parallel_calls=CPUS)
+	# map input - output tuple
 	if is_test_dataset == True:
-		dataset = dataset.map(lambda x1, x2, x3, x4, y1, y2:\
-								((x1, x2, x3, x4), (y1, y2)),\
+		dataset = dataset.map(lambda x1, x2, x3, x4, x5, x6, y1, y2:\
+								((x1, x2, x3, x4, x5, x6), (y1, y2)),\
 								num_parallel_calls=CPUS)
 	else:
-		dataset = dataset.map(lambda x1, x2, x3, y:\
-								((x1, x2, x3), y),\
+		dataset = dataset.map(lambda x1, x2, x3, x4, x5, y:\
+								((x1, x2, x3, x4, x5), y),\
 								num_parallel_calls=CPUS)
 	dataset = dataset.flat_map(flat_map_f)
 	
@@ -548,8 +578,10 @@ def restore_diacritics(sess, model):
 	
 	sess.run(iterator_test.initializer)
 	test_inp_pred, _ = iterator_test.get_next()
-	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred = test_inp_pred
-	input_list = get_input_list(test_char_window_pred, test_words_pred, test_sentence_pred)
+	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred, \
+		test_tags, test_deps = test_inp_pred
+	input_list = get_input_list(test_char_window_pred, test_words_pred, test_sentence_pred,\
+		test_tags, test_deps)
 	
 	predictions = model.predict(x=input_list,
 				  verbose=1,
@@ -563,7 +595,7 @@ def restore_diacritics(sess, model):
 	while True:
 		try:
 			test_inp, test_out = sess.run(test_next_element)
-			test_string_word, _, _, _ = test_inp
+			test_string_word, _, _, _, _, _ = test_inp
 			current_prediction += 1
 
 			word = test_string_word[0]
@@ -611,7 +643,7 @@ def compute_test_accuracy(sess, model):
 	nr_test_batches = args.number_samples_test
 
 	test_inp_pred, _ = iterator_test.get_next()
-	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred = test_inp_pred
+	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred, _, _ = test_inp_pred
 	#  ,\
 	predictions = model.predict(x=[test_char_window_pred, test_words_pred, test_sentence_pred],
 				  verbose=1,
@@ -764,7 +796,7 @@ def parse_args():
 	parser.add_argument('-buff', dest="buffer_size_shuffle",\
 						action='store', default=100000, type=int,\
 						help="size of the buffer for shuffle, default=100000")
-	parser.add_argument('-fastt', dest="use_dummy_word_embeddings",\
+	parser.add_argument('-no_fast', dest="use_dummy_word_embeddings",\
 						action='store_true', default=False,\
 						help="use dummy word embeddings instead of fasttext, default=false")
 	parser.add_argument('-load', dest="load_model_name",\
@@ -772,7 +804,7 @@ def parse_args():
 						help="load presaved model and weights\
 						, specify just the folder name, it will take the last epoch file,\
 						default=None")
-	parser.add_argument('-tv', dest="run_train_validation",\
+	parser.add_argument('-no_train_valid', dest="run_train_validation",\
 						action='store_false', default=True,\
 						help="run train and validation, if false you should set -load model param\
 						, default=True")
@@ -782,15 +814,21 @@ def parse_args():
 	parser.add_argument('-wrong', dest="top_wrong_words_restoration",\
 						action='store', default=30, type=int,\
 						help="hardest words to restore, default=30")
-	parser.add_argument('-char', dest="use_window_characters",\
+	parser.add_argument('-no_char', dest="use_window_characters",\
 						action='store_false', default=True,\
 						help="if model should use window of characters, default=True")
-	parser.add_argument('-word', dest="use_word_embedding",\
+	parser.add_argument('-no_word', dest="use_word_embedding",\
 						action='store_false', default=True,\
 						help="if model should use word embeddings, default=True")
-	parser.add_argument('-sent', dest="use_sentence_embedding",\
+	parser.add_argument('-no_sent', dest="use_sentence_embedding",\
 						action='store_false', default=True,\
 						help="if model should use sentence embedding, default=True")
+	parser.add_argument('-no_tags', dest="use_tags",\
+						action='store_false', default=True,\
+						help="if model should use tags of the words, default=True")
+	parser.add_argument('-no_deps', dest="use_deps",\
+						action='store_false', default=True,\
+						help="if model should use dependencies of the words, default=True")
 	parser.add_argument('-hidden', dest="hidden_neurons",\
 						action='append', type=int,\
 						help="number of neurons on the hidden layer, no default")
@@ -842,7 +880,8 @@ def get_number_samples():
 		inp_batches_valid = samples_number['full_valid'] // batch_size
 	return inp_batches_train, inp_batches_test, inp_batches_valid
 
-def get_input_list(characters_bi_lstm_layer, word_embeddings_layer, sentence_bi_lstm_layer):
+def get_input_list(characters_bi_lstm_layer, word_embeddings_layer, sentence_bi_lstm_layer, tags, deps):
+	
 	input_list = []
 	if args.use_window_characters == True:
 		input_list.append(characters_bi_lstm_layer)
@@ -852,7 +891,48 @@ def get_input_list(characters_bi_lstm_layer, word_embeddings_layer, sentence_bi_
 
 	if args.use_sentence_embedding == True:
 		input_list.append(sentence_bi_lstm_layer)
+	
+	if args.use_tags == True:
+		input_list.append(tags)
+
+	if args.use_deps == True:
+		input_list.append(deps)
+
 	return input_list
+
+class AttentionLayer(Layer):
+
+    def __init__(self, **kwargs):
+        super(AttentionLayer, self).__init__(**kwargs)
+
+	# multiple inputs represented as a list (of tuples?)
+    def build(self, input_shape):
+        assert isinstance(input_shape, list)
+        # Create a trainable weight variable for this layer.
+		# 
+        self.kernel = self.add_weight(name='kernel',
+                                      shape=(character_embedding_size, characters_cell_size * 2),
+                                      initializer='uniform',
+                                      trainable=True)
+        super(AttentionLayer, self).build(input_shape)  # Be sure to call this at the end
+
+    def call(self, x):
+        assert isinstance(x, list)
+		# W = windows size
+		# C = cell size
+		# E = embedding size
+		# inputt has shape (batch_size, W, E) 
+		# hidden has shape (batch_size, W, C * 2)
+		# kernel has shape (E, C * 2)
+        inputt, hidden = x
+        # inputt * kernel * hidden_states.T
+        return K.batch_dot(K.batch_dot(inputt, K.repeat_elements(K.expand_dims(self.kernel, axis=0), batch_size, axis=0)),\
+				K.permute_dimensions(hidden, (0, 2, 1)))
+		# res i j = correlation between input i and hidden state j
+
+    def compute_output_shape(self, input_shape):
+        assert isinstance(input_shape, list)
+        return (batch_size, window_character * 2 + 1, window_character * 2 + 1)
 
 # construct the model 
 def construct_model(sess):
@@ -878,8 +958,9 @@ def construct_model(sess):
 
 		character_lstm_layer = keras.layers.LSTM(
 								units=characters_cell_size,\
-								input_shape=(window_character * 2 + 1, character_embedding_size,))
-
+								input_shape=(window_character * 2 + 1, character_embedding_size,),
+								return_sequences=False)
+		
 		characters_bi_lstm_layer = keras.layers.Bidirectional(
 								layer=character_lstm_layer,\
 								merge_mode="concat")(character_embeddings_layer)
@@ -893,24 +974,40 @@ def construct_model(sess):
 
 		sentence_bi_lstm_layer = keras.layers.Bidirectional(layer=sentence_lstm_layer,\
 															merge_mode="concat")(sentence_embeddings_layer)
+		# tags 
+		tags = keras.layers.Input(shape=(1,),\
+								dtype='float32')
+		# deps
+		deps = keras.layers.Input(shape=(1,),\
+								dtype='float32')
 		# merged
 		input_list = get_input_list(characters_bi_lstm_layer,\
-			word_embeddings_layer, sentence_bi_lstm_layer)
+			word_embeddings_layer, sentence_bi_lstm_layer, tags, deps)
 		if len(input_list) > 1:
 			merged_layer = keras.layers.concatenate(input_list, axis=-1)
 		else:
 			merged_layer = input_list[0]
 		prev_layer = merged_layer
+		#prev_layer = keras.layers.Flatten()(prev_layer)
+		#attention = AttentionLayer()([character_embeddings_layer, prev_layer])
+		#attention = keras.layers.Flatten()(attention)
+		attention = prev_layer
+
 		# hidden layers
 		for h_neurons in args.hidden_neurons:
-			prev_layer = keras.layers.Dense(h_neurons, activation='tanh')(prev_layer)
-		output = keras.layers.Dense(args.nr_classes, activation='softmax')(prev_layer)
+			attention = keras.layers.Dense(h_neurons, activation='tanh')(attention)
+		output = keras.layers.Dense(args.nr_classes, activation='softmax')(attention)
 
-		model = keras.models.Model(inputs=[input_character_window, word_embeddings_layer, sentence_embeddings_layer],\
+		# [input_character_window, word_embeddings_layer, sentence_embeddings_layer]
+		model_input = get_input_list(input_character_window, word_embeddings_layer, sentence_embeddings_layer,\
+			tags, deps)
+
+		model = keras.models.Model(inputs=model_input,\
 								outputs=output)
 		model.compile(optimizer='adam',\
 					loss='categorical_crossentropy',\
 					metrics=['accuracy'])
+		print(model.summary())
 	return model, last_epoch
 
 if __name__ == "__main__":
@@ -925,7 +1022,7 @@ if __name__ == "__main__":
 
 	if args.use_dummy_word_embeddings == False:
 		model_embeddings = FastTextWrapper.load_fasttext_format(fast_text)
-	
+
 	config = tf.ConfigProto()
 	config.gpu_options.per_process_gpu_memory_fraction = args.percent_memory_gpu
 
@@ -933,7 +1030,7 @@ if __name__ == "__main__":
 
 		if inp_batches_test < args.number_samples_test:
 			print("cannot start, too many test samples given, has to be lower than "\
-				 + str(inp_batches_test))
+					+ str(inp_batches_test))
 
 		print("char, word, sentence - char cell:{}, word cell: {}, hidden: {}"\
 			.format(characters_cell_size, sentence_cell_size, neurons_dense_layer_after_merge))
@@ -955,16 +1052,17 @@ if __name__ == "__main__":
 					print('resseting iterators')
 					sess.run(iterator_valid.initializer)
 					valid_inp, valid_out = iterator_valid.get_next()
-					valid_char_window, valid_words, valid_sentence = valid_inp
+					valid_char_window, valid_words, valid_sentence, valid_tags, valid_deps = valid_inp
 
 					sess.run(iterator_train.initializer)
 					train_inp, train_out = iterator_train.get_next()
-					train_char_window, train_words, train_sentence = train_inp
+					train_char_window, train_words, train_sentence, train_tags, train_deps = train_inp
 				
 				# train an epoch
-				#train_words, train_sentence],\
+				train_input = get_input_list(train_char_window, train_words, train_sentence,\
+					train_tags, train_deps)
 				model.fit(\
-					train_char_window,\
+					train_input,\
 					[train_out],\
 					steps_per_epoch=inp_batches_train//args.reset_iterators_every_epochs,\
 					epochs=1,\
@@ -977,8 +1075,9 @@ if __name__ == "__main__":
 							'epoch_' + str(i) + '.h5'
 					model.save(full_path_epoch_weights)
 				# validate 
-				# valid_words, valid_sentence],
-				[valid_loss, valid_acc] = model.evaluate(valid_char_window,\
+				valid_input = get_input_list(valid_char_window, valid_words, valid_sentence,
+					valid_tags, valid_deps)
+				[valid_loss, valid_acc] = model.evaluate(valid_input,\
 											valid_out,\
 											verbose=1,\
 											steps=inp_batches_valid//args.reset_iterators_every_epochs)
