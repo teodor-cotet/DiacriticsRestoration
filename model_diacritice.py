@@ -1,30 +1,11 @@
-<<<<<<< HEAD
-import tensorflow as tf
-import numpy as np
-#import keras
-from tensorflow import keras
-from tensorflow.keras import backend as K
-from tensorflow.keras.layers import Layer
-import nltk
-from gensim.models.wrappers import FastText as FastTextWrapper
-
-import unidecode
-=======
 import argparse
 import os
->>>>>>> b831581f36e2fa153e7df04ab393ee066d831e2f
 import re
 import string
 import threading
 import time
 from typing import List
 
-<<<<<<< HEAD
-import argparse
-import os
-import threading
-import spacy
-=======
 import nltk
 import numpy as np
 import tensorflow as tf
@@ -34,7 +15,6 @@ from tensorflow import keras
 import keras 
 nltk.download('punkt')
 
->>>>>>> b831581f36e2fa153e7df04ab393ee066d831e2f
 
 args = None
 model_embeddings = None
@@ -592,13 +572,6 @@ def restore_diacritics(sess, model):
 	
 	sess.run(iterator_test.initializer)
 	test_inp_pred, _ = iterator_test.get_next()
-<<<<<<< HEAD
-	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred, \
-		test_tags, test_deps = test_inp_pred
-	input_list = get_input_list(test_char_window_pred, test_words_pred, test_sentence_pred,\
-		test_tags, test_deps)
-	
-=======
 	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred = test_inp_pred
 	#test_char_window_pred.reshape((window_character * 2 + 1, -1))
 	#tf.reshape(test_char_window_pred,  [window_character * 2 + 1, -1])
@@ -606,7 +579,6 @@ def restore_diacritics(sess, model):
 	input_list = np.asarray(get_input_list(test_char_window_pred, test_words_pred, test_sentence_pred))
 	#print('input shape for predictions {}'.format(tf.shape(test_char_window_pred[0])))
 
->>>>>>> b831581f36e2fa153e7df04ab393ee066d831e2f
 	predictions = model.predict(x=input_list,
 				  verbose=1,
 				  steps=nr_predictions)
