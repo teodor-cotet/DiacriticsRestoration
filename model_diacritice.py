@@ -12,7 +12,9 @@ import tensorflow as tf
 import unidecode
 from gensim.models.wrappers import FastText as FastTextWrapper
 from tensorflow import keras
-import keras 
+import keras
+from keras import backend as K
+import spacy
 nltk.download('punkt')
 
 
@@ -572,13 +574,13 @@ def restore_diacritics(sess, model):
 	
 	sess.run(iterator_test.initializer)
 	test_inp_pred, _ = iterator_test.get_next()
-	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred = test_inp_pred
+	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred, _, _ = test_inp_pred
 	#test_char_window_pred.reshape((window_character * 2 + 1, -1))
 	#tf.reshape(test_char_window_pred,  [window_character * 2 + 1, -1])
-	#print(tf.shape(test_char_window_pred))
-	input_list = np.asarray(get_input_list(test_char_window_pred, test_words_pred, test_sentence_pred))
-	#print('input shape for predictions {}'.format(tf.shape(test_char_window_pred[0])))
-
+	print(tf.shape(test_char_window_pred))
+	input_list = get_input_list(test_char_window_pred, test_words_pred, test_sentence_pred, None, None)
+	print('input shape for predictions {}'.format(tf.shape(test_char_window_pred)))
+	#print('input shape for predictions {}'.format(tf.shape(input_list)))
 	predictions = model.predict(x=input_list,
 				  verbose=1,
 				  steps=nr_predictions)
@@ -767,7 +769,7 @@ def set_up_folders_saved_models():
 def parse_args():
 	# when specify -load, specify also the nr of classes and if the model uses chars, words, sent
 	# to restore diacritics run: 
-	# python3 model_diacritice.py -buff 1000 -fastt -load models/chars24-64 -tv -word -sent -classes 4 -restore raw_text.txt
+	# python3 model_diacritice.py -buff 1000 -no_fast -load saved_models_diacritice/chars24-64 -no_word -no_sent -classes 4 -no_dep -no_tag -restore raw_text.txt
 	
 	global args
 	parser = argparse.ArgumentParser(description='Run diacritics model')
@@ -882,6 +884,7 @@ def get_number_samples():
 def get_input_list(characters_bi_lstm_layer, word_embeddings_layer, sentence_bi_lstm_layer, tags, deps):
 	
 	input_list = []
+
 	if args.use_window_characters == True:
 		input_list.append(characters_bi_lstm_layer)
 
@@ -896,10 +899,11 @@ def get_input_list(characters_bi_lstm_layer, word_embeddings_layer, sentence_bi_
 
 	if args.use_deps == True:
 		input_list.append(deps)
-
+	# if len(input_list) == 1:
+	# 	return input_list[0]
 	return input_list
 
-class AttentionLayer(Layer):
+class AttentionLayer(keras.layers.Layer):
 
     def __init__(self, **kwargs):
         super(AttentionLayer, self).__init__(**kwargs)
