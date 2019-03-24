@@ -1,6 +1,10 @@
 # Diacritics restoration for Romanian
 
-The article can be found [here](https://bitbucket.org/teodor_cotet/diacritics/src/master/article/Diacritics%20ConsILR%202018.pdf)
+The full article can be found [here](https://bitbucket.org/teodor_cotet/diacritics/src/master/article/Diacritics%20ConsILR%202018.pdf).
+Implementation was done using [Keras](https://keras.io/) with [Tensorflow](https://www.tensorflow.org/). 
+The core of the implementation is done in [model_diacritice.py](https://bitbucket.org/teodor_cotet/diacritics/src/master/model_diacritice.py).
+As a corpora we used parliamentary debates (see *Corpora* section).
+
 ## Corpora
 
 | **PAR**          |                                        | ROWIKI |         |       |         |
@@ -14,14 +18,14 @@ The article can be found [here](https://bitbucket.org/teodor_cotet/diacritics/sr
 | Sentences    |                                        | 2.6M   |         | 22.0M |         |
 | Unique words |                                        | 0.21M  |         | 2.62M |         |
 
-Only PAR corpus was used in the end. 
+Only PAR corpus was used in the end because of its higher quality.
 
 ## Models 
-The architecutre of the models is briefly described in the picutre below. Several models were tried, using different branches.
+
+The architecutre of the models is briefly described in the picutre below. Several models were tried, using different branches of the architecture.
 See the *Results* section for more details, or you can read the full [article](https://bitbucket.org/teodor_cotet/diacritics/src/master/article/Diacritics%20ConsILR%202018.pdf)
 
-[architecture](https://bitbucket.org/teodor_cotet/diacritics/raw/0811ae10fdae3da2b2f07cb014c8d5055d1ec812/imgs/architecture.png)
-
+![architecture](https://bitbucket.org/teodor_cotet/diacritics/raw/0811ae10fdae3da2b2f07cb014c8d5055d1ec812/imgs/architecture.png)
 
 ## Results 
 
