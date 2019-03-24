@@ -1,10 +1,10 @@
 # Diacritics restoration for Romanian
 
-The full article can be found [here](https://bitbucket.org/teodor_cotet/diacritics/src/master/article/Diacritics%20ConsILR%202018.pdf).
-Implementation was done using [Keras](https://keras.io/) with [Tensorflow](https://www.tensorflow.org/). 
-The core of the implementation is done in [model_diacritice.py](https://bitbucket.org/teodor_cotet/diacritics/src/master/model_diacritice.py).
-As a corpora we used parliamentary debates (see *Corpora* section).
-
+The full article can be found [here](https://bitbucket.org/teodor_cotet/diacritics/src/master/article/Diacritics%20ConsILR%202018.pdf).  
+Implementation was done using [Keras](https://keras.io/) with [Tensorflow](https://www.tensorflow.org/).   
+The core of the implementation is done in [model_diacritice.py](https://bitbucket.org/teodor_cotet/diacritics/src/master/model_diacritice.py).  
+As a corpora we used parliamentary debates (see *Corpora* section).  
+ 
 ## Corpora
 
 | **PAR**          |                                        | ROWIKI |         |       |         |
