@@ -1,8 +1,6 @@
 # Diacritics restoration for Romanian
 
-The model will read text from input.txt (utf-8) and restore the diacritics in tmp_res.txt file. Only the pre-trained models that use characters are available on this git. 
-
-
+The article can be found [here](https://bitbucket.org/teodor_cotet/diacritics/src/master/article/Diacritics%20ConsILR%202018.pdf)
 ## Corpora
 
 | **PAR**          |                                        | ROWIKI |         |       |         |
@@ -17,6 +15,13 @@ The model will read text from input.txt (utf-8) and restore the diacritics in tm
 | Unique words |                                        | 0.21M  |         | 2.62M |         |
 
 Only PAR corpus was used in the end. 
+
+## Models 
+The architecutre of the models is briefly described in the picutre below. Several models were tried, using different branches.
+See the *Results* section for more details, or you can read the full [article](https://bitbucket.org/teodor_cotet/diacritics/src/master/article/Diacritics%20ConsILR%202018.pdf)
+
+[architecture](https://bitbucket.org/teodor_cotet/diacritics/raw/0811ae10fdae3da2b2f07cb014c8d5055d1ec812/imgs/architecture.png)
+
 
 ## Results 
 
@@ -54,3 +59,5 @@ Best models performance per letter:
 ```sh
     python3 model_diacritice.py -no_fast -load saved_models_diacritice/chars24-64 -no_word -no_sent -classes 4 -no_dep -no_tag -restore input.txt
 ```
+
+The model will read text from input.txt (utf-8) and restore the diacritics in tmp_res.txt file. Only the pre-trained models that use characters are available on this git. 
