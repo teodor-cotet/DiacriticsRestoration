@@ -472,7 +472,8 @@ def get_dataset(dpath, sess, is_test_dataset=False, restore=False):
 	
 	# do not shuffle or batch test dataset
 	if is_test_dataset == True:
-		dataset = dataset.batch(1, drop_remainder=True)
+		#dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(1))
+		dataset = dataset.batch(1)
 	else:
 		dataset = dataset.shuffle(args.buffer_size_shuffle)
 		dataset = dataset.batch(batch_size)
@@ -575,12 +576,21 @@ def restore_diacritics(sess, model):
 	sess.run(iterator_test.initializer)
 	test_inp_pred, _ = iterator_test.get_next()
 	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred, _, _ = test_inp_pred
-	#test_char_window_pred.reshape((window_character * 2 + 1, -1))
-	#tf.reshape(test_char_window_pred,  [window_character * 2 + 1, -1])
-	print(tf.shape(test_char_window_pred))
+	test_char_window_pred = tf.reshape(test_char_window_pred,  [window_character * 2 + 1, -1])
+	test_words_pred = tf.reshape(test_words_pred, [word_embedding_size, -1])
+	test_sentence_pred = tf.reshape(test_sentence_pred, [window_sentence * 2 + 1, word_embedding_size, -1])
+	
+	print(tf.Tensor.get_shape(test_char_window_pred))
+	print(tf.Tensor.get_shape(test_words_pred))
+	print(tf.Tensor.get_shape(test_sentence_pred))
+
 	input_list = get_input_list(test_char_window_pred, test_words_pred, test_sentence_pred, None, None)
-	print('input shape for predictions {}'.format(tf.shape(test_char_window_pred)))
-	#print('input shape for predictions {}'.format(tf.shape(input_list)))
+	#input_list = np.asarray(input_list)
+	#print(len(input_list))
+	# print(tf.Tensor.get_shape(input_list[0]))
+	# print(tf.Tensor.get_shape(input_list[1]))
+	# print(tf.Tensor.get_shape(input_list[2]))
+
 	predictions = model.predict(x=input_list,
 				  verbose=1,
 				  steps=nr_predictions)
@@ -599,7 +609,6 @@ def restore_diacritics(sess, model):
 			word = test_string_word[0]
 			original_word = test_out[1][0]
 
-			#print(word, original_word)
 			nr_chars_in_word, list_chars_in_word = count_chars_in_interest(word)
 			correct_prediction_word = True
 			for i in range(nr_chars_in_word):
@@ -630,7 +639,7 @@ def restore_diacritics(sess, model):
 		except tf.errors.OutOfRangeError:
 			break
 	res = "".join(all_txt)
-	with open('tmp_res.txt', 'w') as f:
+	with open('tmp_res.txt', 'w', encoding='utf-8') as f:
 		f.write(res)
 	
 def compute_test_accuracy(sess, model):
@@ -899,8 +908,10 @@ def get_input_list(characters_bi_lstm_layer, word_embeddings_layer, sentence_bi_
 
 	if args.use_deps == True:
 		input_list.append(deps)
-	# if len(input_list) == 1:
-	# 	return input_list[0]
+
+	if len(input_list) == 1:
+		return input_list[0]
+
 	return input_list
 
 class AttentionLayer(keras.layers.Layer):
