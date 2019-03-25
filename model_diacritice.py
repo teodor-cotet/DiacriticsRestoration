@@ -428,7 +428,7 @@ def filter_null_strings(s):
 def flat_map_f(a, b):
 	return tf.data.Dataset.from_tensor_slices((a, b))
 
-def get_dataset(dpath, sess, is_test_dataset=False, restore=False):
+def get_dataset(dpath, sess, is_test_dataset=False, restore=False, batch_1=False):
 
 	if restore == False:
 		input_files = tf.gfile.ListDirectory(dpath)
@@ -472,8 +472,10 @@ def get_dataset(dpath, sess, is_test_dataset=False, restore=False):
 	
 	# do not shuffle or batch test dataset
 	if is_test_dataset == True:
-		#dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(1))
-		dataset = dataset.batch(1)
+		if batch_1 == False:
+			dataset = dataset.batch(args.batch_size_restore)
+		else:
+			dataset = dataset.batch(1)
 	else:
 		dataset = dataset.shuffle(args.buffer_size_shuffle)
 		dataset = dataset.batch(batch_size)
@@ -483,6 +485,10 @@ def get_dataset(dpath, sess, is_test_dataset=False, restore=False):
 
 def get_charr(simple_c, case):
 
+	# 0 : ă
+	# 1 : â, î
+	# 2 : a, i, t, s
+	# 3 : ț, ș
 	if simple_c == 'a':
 		if case == 0: # ă
 			return 'ă'
@@ -507,6 +513,7 @@ def get_charr(simple_c, case):
 			return 'ș'
 		elif case == 2:
 			return 's'
+	print('the model is not trained properly')
 	return 'a'
 
 def compute_prediction(correct_case, predicted_case, simple_c, precision_chars, recall_chars):
@@ -528,7 +535,7 @@ def get_next_possible(all_txt, index_full_text):
 
 def restore_char(pred_char, original_char, original_word):
 	
-	# don't modify char if already there
+	# don't modify char if already there (has diacritics)
 	if original_char in map_no_diac:
 		return original_char
 	# don't modify the word if is only uppercase letters
@@ -538,109 +545,100 @@ def restore_char(pred_char, original_char, original_word):
 		return pred_char.upper()
 	return pred_char
 
+def restore_char_simple(pred_char, original_char):
+	# don't modify char if already there
+	if original_char in map_no_diac:
+		return original_char
+	elif original_char.isupper():
+		return pred_char.upper()
+	return pred_char
+
+# restoration expects a file
+def restore_file(sess, model, file_path, nr_batches, batch_1=False):
+	all_txt = []
+	with open(file_path, 'r', encoding='utf-8') as f:
+		for line in f:
+			all_txt.append(list(line))
+	all_txt = sum(all_txt, [])
+
+	if batch_1 == True:
+		batch_sizee = 1
+	else:
+		batch_sizee = args.batch_size_restore
+
+	dt_test = get_dataset(file_path, sess, True, True, batch_1=batch_1)
+	iterator_test = dt_test.make_initializable_iterator()
+	
+	sess.run(iterator_test.initializer)
+	test_inp_pred, _ = iterator_test.get_next()
+	_, test_char_window_pred, test_words_pred, test_sentence_pred, _, _ = test_inp_pred
+	test_char_window_pred = tf.reshape(test_char_window_pred,  [batch_sizee, window_character * 2 + 1])
+	test_words_pred = tf.reshape(test_words_pred, [batch_sizee, word_embedding_size])
+	test_sentence_pred = tf.reshape(test_sentence_pred, [batch_sizee, window_sentence * 2 + 1, word_embedding_size])
+
+	input_list = get_input_list(test_char_window_pred, test_words_pred, test_sentence_pred, None, None)
+	predictions = model.predict(x=input_list,
+				  verbose=1,
+				  steps=nr_batches)
+	sess.run(iterator_test.initializer)
+	index_full_text = -1
+
+	for current_prediction in range(batch_sizee * nr_batches):
+		pred_vector = predictions[current_prediction]
+		predicted_case = get_case(pred_vector)
+		index_full_text = get_next_possible(all_txt, index_full_text)
+		c = replace_char_original(all_txt[index_full_text])
+		c = replace_char(c)
+		pred_char = get_charr(c, predicted_case)
+		all_txt[index_full_text] = restore_char_simple(pred_char, all_txt[index_full_text])
+	res = "".join(all_txt)
+	return res
+
+# restoration is done in batches
+# the text is splitted into 2 files - one for the bog batches and with batches == 1
 def restore_diacritics(sess, model):
-	# restoration works by going with 2 indices (current_prediction and index_full_text)
-	# in tensorflow predictions and full text and modifying in the full text with the prediction
-	# this will work only if in create examples there are NO examples droped, so
-	# the original text matches that processed by tensorflow
-	# ideas for making it more robust??
 	print(model.summary())
+	path1 = 'big_batches.txt'
+	path2 = 'small_batches.txt'
+
 	txt_file = args.restore_diacritics
 	all_txt = []
 	
-	with open(txt_file, 'r') as f:
+	with open(txt_file, 'r', encoding='utf-8') as f:
 		for line in f:
 			all_txt.append(list(line))
 
 	all_txt = sum(all_txt, [])
 	all_txt_chars = 0
 
+	# count nr of predictions (all possible)
 	for c in all_txt:
 		if c in all_in:
 			all_txt_chars += 1
-	
-	# get nr of predictions
-	dt_test = get_dataset(txt_file, sess, True, True)
-	nr_predictions = 0
-	iterator_test = dt_test.make_initializable_iterator()
-	sess.run(iterator_test.initializer)
-	test_next_element = iterator_test.get_next()
+	nr_batches = all_txt_chars // args.batch_size_restore
+	partial_txt_chars = 0
 
-	try:
-		while True:
-			sess.run(test_next_element)
-			nr_predictions += 1
-	except:
-		print('nr predictions: {} all txt cnt: {}'.format(nr_predictions, all_txt_chars))
-	
-	sess.run(iterator_test.initializer)
-	test_inp_pred, _ = iterator_test.get_next()
-	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred, _, _ = test_inp_pred
-	test_char_window_pred = tf.reshape(test_char_window_pred,  [window_character * 2 + 1, -1])
-	test_words_pred = tf.reshape(test_words_pred, [word_embedding_size, -1])
-	test_sentence_pred = tf.reshape(test_sentence_pred, [window_sentence * 2 + 1, word_embedding_size, -1])
-	
-	print(tf.Tensor.get_shape(test_char_window_pred))
-	print(tf.Tensor.get_shape(test_words_pred))
-	print(tf.Tensor.get_shape(test_sentence_pred))
-
-	input_list = get_input_list(test_char_window_pred, test_words_pred, test_sentence_pred, None, None)
-	#input_list = np.asarray(input_list)
-	#print(len(input_list))
-	# print(tf.Tensor.get_shape(input_list[0]))
-	# print(tf.Tensor.get_shape(input_list[1]))
-	# print(tf.Tensor.get_shape(input_list[2]))
-
-	predictions = model.predict(x=input_list,
-				  verbose=1,
-				  steps=nr_predictions)
-	sess.run(iterator_test.initializer)
-	test_next_element = iterator_test.get_next()
-	
-	current_prediction = 0
-	index_full_text = -1
-
-	while True:
-		try:
-			test_inp, test_out = sess.run(test_next_element)
-			test_string_word, _, _, _, _, _ = test_inp
-			current_prediction += 1
-
-			word = test_string_word[0]
-			original_word = test_out[1][0]
-
-			nr_chars_in_word, list_chars_in_word = count_chars_in_interest(word)
-			correct_prediction_word = True
-			for i in range(nr_chars_in_word):
-				pred_vector = predictions[current_prediction - 1]
-				predicted_case = get_case(pred_vector)
-				correct_case = get_case(test_out[0][0])
-				
-				#print(predicted_case, correct_case)
-				pred_char = get_charr(list_chars_in_word[i], predicted_case)
-				correct_char = get_charr(list_chars_in_word[i], correct_case)
-
-				index_full_text = get_next_possible(all_txt, index_full_text)
-				res_char = restore_char(pred_char, all_txt[index_full_text], original_word)
-				#print(res_char, correct_char)
-				all_txt[index_full_text] = res_char
-
-				if current_prediction == nr_predictions:
-					break
-
-				# if not end of the word yet
-				if i < nr_chars_in_word - 1:
-					_, test_out = sess.run(test_next_element)
-					current_prediction += 1
-			
-			if current_prediction == nr_predictions or current_prediction == all_txt_chars:
+	for i, c in enumerate(all_txt):
+		if c in all_in:
+			partial_txt_chars += 1
+			if partial_txt_chars == nr_batches * args.batch_size_restore:
+				txt_big_batches = all_txt[:i+1]
+				txt_small_batches = all_txt[i+1:]
 				break
 
-		except tf.errors.OutOfRangeError:
-			break
-	res = "".join(all_txt)
+	with open(path1, 'w', encoding='utf-8') as f:
+		f.write("".join(txt_big_batches))
+		
+	with open(path2, 'w', encoding='utf-8') as f:
+		f.write("".join(txt_small_batches))
+	
+	s1 = restore_file(sess, model, path1, nr_batches, batch_1=False)
+	s2 = restore_file(sess, model, path2, all_txt_chars - partial_txt_chars, batch_1=True)
+	os.remove(path1)
+	os.remove(path2)
+
 	with open('tmp_res.txt', 'w', encoding='utf-8') as f:
-		f.write(res)
+		f.write(s1 + s2)
 	
 def compute_test_accuracy(sess, model):
 	dt_test = get_dataset(test_files, sess, True)
@@ -651,7 +649,6 @@ def compute_test_accuracy(sess, model):
 
 	test_inp_pred, _ = iterator_test.get_next()
 	test_string_word_pred, test_char_window_pred, test_words_pred, test_sentence_pred, _, _ = test_inp_pred
-	#  ,\
 	predictions = model.predict(x=[test_char_window_pred, test_words_pred, test_sentence_pred],
 				  verbose=1,
 				  steps=nr_test_batches)
@@ -778,7 +775,7 @@ def set_up_folders_saved_models():
 def parse_args():
 	# when specify -load, specify also the nr of classes and if the model uses chars, words, sent
 	# to restore diacritics run: 
-	# python3 model_diacritice.py -buff 1000 -no_fast -load saved_models_diacritice/chars24-64 -no_word -no_sent -classes 4 -no_dep -no_tag -restore raw_text.txt
+	# python model_diacritice.py -buff 1000 -no_fast -load saved_models_diacritice/chars16-32-4classes -no_word -no_sent -classes 4 -no_dep -no_tag -restore raw_text.txt
 	
 	global args
 	parser = argparse.ArgumentParser(description='Run diacritics model')
@@ -848,27 +845,20 @@ def parse_args():
 	parser.add_argument('-restore', dest="restore_diacritics", 
 						action='store', default=None,\
 						help="name of the file to restore diacritics")
+	parser.add_argument('--batch_size_restore', dest="batch_size_restore", 
+						action='store', type=int, default=64,\
+						help="batch size ised for restoration")
 	args = parser.parse_args()
 	args.folder_saved_model_per_epoch += '/'
 
 	
 	if args.restore_diacritics is not None:
 		# by default use the best model
-		if args.load_model_name is None:
-			#args.load_model_name = "5-all-256-12100
-			args.load_model_name = "only_chars_win31_256_64_55"
-			args.use_window_characters = True
-			args.use_word_embedding = False
-			args.use_sentence_embedding = False
-			args.nr_classes = 5
-			args.use_dummy_word_embeddings = True
+		
 		args.save_model = False
 		args.do_test = False
 		args.buffer_size_shuffle = 100
 		args.run_train_validation = False
-
-	if args.load_model_name is not None:
-		args.load_model_name += '/'
 
 	if args.nr_classes != 4 and args.nr_classes != 5:
 		print('classes has to be either 4 or 5, exit')
@@ -957,10 +947,9 @@ def construct_model(sess):
 		folder_path_with_epochs = args.load_model_name 
 		epochs_files = os.listdir(folder_path_with_epochs)
 		sorted_epochs_files = sorted(epochs_files)
-		load_file = sorted_epochs_files[-1]
-		print('loading model from: ' +\
-		 		args.load_model_name + load_file)
-		model = keras.models.load_model(args.load_model_name + load_file)
+		args.load_model_name = os.path.join(args.load_model_name, sorted_epochs_files[-1])
+		print('load model name: {}'.format(args.load_model_name))
+		model = keras.models.load_model(args.load_model_name)
 		last_epoch = len(sorted_epochs_files)
 	else:
 		vocabulary_size = max_unicode_allowed + 1
@@ -1028,8 +1017,6 @@ if __name__ == "__main__":
 
 	create_lower_mapping()
 	parse_args()
-	if args.load_model_name is not None:
-		print('loading last epoch weights from ' + args.load_model_name)
 
 	inp_batches_train, inp_batches_test, inp_batches_valid = get_number_samples()
 	set_up_folders_saved_models()
